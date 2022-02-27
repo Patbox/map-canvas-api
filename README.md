@@ -1,6 +1,5 @@
 # Map Canvas API
-Simple, server side api for drawing on maps without id collisions and runtime only state
-
+Simple, server side api for drawing on maps with runtime only state and no id collisions! It can be used in non-main/server threads for better performance/more fps.
 ## Usage:
 Add it to your dependencies like this:
 
@@ -10,7 +9,7 @@ repositories {
 }
 
 dependencies {
-	modImplementation include("eu.pb4:mapcanvas:[TAG]")
+	modImplementation include("eu.pb4:map-canvas-api:[TAG]")
 }
 ```
 
