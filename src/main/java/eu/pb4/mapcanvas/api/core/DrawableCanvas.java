@@ -1,0 +1,104 @@
+package eu.pb4.mapcanvas.api.core;
+
+import eu.pb4.mapcanvas.impl.MapIdManager;
+import eu.pb4.mapcanvas.impl.MultiMapCanvasImpl;
+import eu.pb4.mapcanvas.impl.SingleMapCanvas;
+import net.minecraft.block.MapColor;
+import net.minecraft.item.map.MapIcon;
+import net.minecraft.text.Text;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
+
+@ApiStatus.NonExtendable
+public interface DrawableCanvas {
+    default void set(int x, int y, MapColor color, MapColor.Brightness brightness) {
+        this.setRaw(x, y, color.getRenderColorByte(brightness));
+    }
+
+    default void set(int x, int y, CanvasColor color) {
+        this.setRaw(x, y, color.renderColor);
+    }
+
+    default CanvasColor get(int x, int y) {
+        return CanvasColor.BY_RENDER_COLOR[Byte.toUnsignedInt(this.getRaw(x, y))];
+    }
+
+    byte getRaw(int x, int y);
+
+    void setRaw(int x, int y, byte color);
+
+    int getHeight();
+
+    int getWidth();
+
+    default int getIconHeight() {
+        return this.getHeight() * 2;
+    }
+
+    default int getIconWidth() {
+        return this.getWidth() * 2;
+    }
+
+
+    default CanvasIcon createIcon(MapIcon.Type type, int x, int y) {
+        return this.createIcon(type, x, y, (byte) 0, null);
+    }
+
+    default CanvasIcon createIcon(MapIcon.Type type, int x, int y, @Nullable Text text) {
+        return this.createIcon(type, x, y, (byte) 0, text);
+    }
+
+    default CanvasIcon createIcon(MapIcon.Type type, int x, int y, byte rotation, @Nullable Text text) {
+        return this.createIcon(type, true, x, y,  (byte) 0, text);
+    }
+
+    Collection<CanvasIcon> getIcons();
+
+    CanvasIcon createIcon(MapIcon.Type type, boolean visible, int x, int y, byte rotation, @Nullable Text text);
+
+    CanvasIcon createIcon();
+
+    void removeIcon(CanvasIcon icon);
+
+    default CanvasImage copy() {
+        final var width = this.getWidth();
+        final var height = this.getHeight();
+        final var image = new CanvasImage(width, height);
+
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                image.setRaw(x, y, this.getRaw(x, y));
+            }
+        }
+
+        return image;
+    }
+
+    default CanvasImage copy(int x, int y, int width, int height) {
+        final var newWidth = Math.min(this.getWidth() - x, width);
+        final var newHeight = Math.min(this.getHeight() - y, height);
+        final var image = new CanvasImage(newWidth, newHeight);
+
+        for (int lx = 0; lx < newWidth; lx++) {
+            for (int ly = 0; ly < newHeight; ly++) {
+                image.setRaw(lx, ly, this.getRaw(x + lx, y + ly));
+            }
+        }
+
+        return image;
+    }
+
+    static PlayerCanvas create() {
+        return new SingleMapCanvas(MapIdManager.requestMapId());
+    }
+
+    static CombinedPlayerCanvas create(int sectionWidth, int sectionHeight) {
+        return new MultiMapCanvasImpl(sectionWidth, sectionHeight);
+    }
+
+    static CanvasImage createImage(int width, int height) {
+        return new CanvasImage(width, height);
+    }
+}

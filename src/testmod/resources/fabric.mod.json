@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "mapcanvas-testmod",
+  "version": "1.0.0",
+
+  "name": "Test Mod",
+  "description": "",
+  "authors": [
+    "Patbox"
+  ],
+
+  "license": "LGPLv3",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "eu.pb4.mapcanvas.testmod.TestMod"
+    ]
+  }
+}

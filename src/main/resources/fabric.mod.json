@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "map-canvas-api",
+  "version": "${version}",
+  "name": "Map Canvas API",
+  "description": "Simple, server side api for drawing on maps!",
+  "authors": [
+    "Patbox"
+  ],
+  "contact": {
+    "homepage": "https://pb4.eu",
+    "sources": "https://github.com/Patbox/map-canvas"
+  },
+  "license": "LGPLv3",
+  "icon": "assets/icon.png",
+  "environment": "*",
+  "mixins": [
+    "mapcanvas.mixins.json"
+  ],
+  "depends": {
+    "minecraft": ">=1.18.1"
+  },
+  "custom": {
+    "modmenu": {
+      "badges": [ "library" ]
+    }
+  }
+}
