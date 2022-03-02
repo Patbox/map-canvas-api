@@ -28,7 +28,7 @@ public final class BitmapFont implements CanvasFont {
     @Override
     public int getGlyphWidth(int character, double size, int offset) {
         var glyph = this.characters.getOrDefault(character, this.defaultGlyph);
-        return MathHelper.floor((glyph.fontWidth() + 2) * (size / glyph.height() * glyph.logicalHeight() / 8));
+        return MathHelper.floor((glyph.fontWidth() + offset) * (size / glyph.height() * glyph.logicalHeight() / 8));
     }
 
     @Override

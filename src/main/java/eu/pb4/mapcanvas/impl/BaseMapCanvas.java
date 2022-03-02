@@ -1,6 +1,7 @@
 package eu.pb4.mapcanvas.impl;
 
 import eu.pb4.mapcanvas.api.core.CanvasIcon;
+import eu.pb4.mapcanvas.api.core.IconContainer;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import net.minecraft.item.map.MapIcon;
@@ -9,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public abstract class BaseMapCanvas implements DrawableCanvas {
+public abstract class BaseMapCanvas implements DrawableCanvas, IconContainer {
     protected final byte[] data = new byte[CanvasUtils.MAP_DATA_SIZE * CanvasUtils.MAP_DATA_SIZE];
     protected final Set<SimpleCanvasIcon> icons = new HashSet<>();
     private int iconId = 0;

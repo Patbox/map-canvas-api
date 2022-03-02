@@ -28,7 +28,7 @@ public interface CanvasIcon {
 
     void setText(Text text);
 
-    DrawableCanvas getOwningCanvas();
+    <T extends DrawableCanvas & IconContainer> T getOwningCanvas();
 
     default void remove() {
         this.getOwningCanvas().removeIcon(this);

@@ -14,7 +14,7 @@ import java.util.*;
 /**
  * Minimal implementation of DrawableCanvas, used to store images independent of maps
  */
-public final class CanvasImage implements DrawableCanvas {
+public final class CanvasImage implements DrawableCanvas, IconContainer {
     private final int width;
     private final int height;
     private final byte[] data;
@@ -40,7 +40,7 @@ public final class CanvasImage implements DrawableCanvas {
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                canvas.set(x, y, CanvasUtils.findClosestColorARGB(image.getRGB(x, y)));
+                canvas.setRaw(x, y, CanvasUtils.findClosestRawColorARGB(image.getRGB(x, y)));
             }
         }
 

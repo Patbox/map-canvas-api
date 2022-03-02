@@ -56,6 +56,7 @@ public class TestMod implements ModInitializer {
     private int msPerFrame = 1000 / 10;
     private CanvasFont fontUnsanded;
     private CanvasImage logo;
+    private CanvasImage modrinth;
 
     private int test(CommandContext<ServerCommandSource> ctx) {
         try {
@@ -118,10 +119,25 @@ public class TestMod implements ModInitializer {
         });
 
         try {
-            this.tater = CanvasImage.from(ImageIO.read(new URL("https://cdn.discordapp.com/attachments/552976908070027270/854881217950122024/tinypotato.png")));
+            var image = ImageIO.read(new URL("https://cdn.discordapp.com/attachments/552976908070027270/854881217950122024/tinypotato.png"));
+
+            for (int i = 0; i < 10; i++){
+                long start = System.currentTimeMillis();
+                this.tater = CanvasImage.from(image);
+                System.out.println("Buildin time passed = " + (System.currentTimeMillis() - start));
+            }
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        try {
+            this.modrinth = CanvasImage.from(ImageIO.read(new URL("https://pbs.twimg.com/media/FMZvRSUWUAE2JAd?format=png")));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
         try {
             this.logo = CanvasImage.from(ImageIO.read(Files.newInputStream(FabricLoader.getInstance().getModContainer("map-canvas-api").get().getPath("assets/icon.png"))));

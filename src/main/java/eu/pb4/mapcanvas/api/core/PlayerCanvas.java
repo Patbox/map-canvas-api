@@ -7,7 +7,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.NonExtendable
-public interface PlayerCanvas extends DrawableCanvas {
+public interface PlayerCanvas extends DrawableCanvas, IconContainer {
     default boolean addPlayer(ServerPlayerEntity player) {
         return this.addPlayer(player.networkHandler);
     }
@@ -25,6 +25,14 @@ public interface PlayerCanvas extends DrawableCanvas {
     boolean isDirty();
 
     int getId();
+
+    default int getIconHeight() {
+        return this.getHeight() * 2;
+    }
+
+    default int getIconWidth() {
+        return this.getWidth() * 2;
+    }
 
     default ItemStack asStack() {
         var stack = new ItemStack(Items.FILLED_MAP);

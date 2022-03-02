@@ -2,12 +2,16 @@ package eu.pb4.mapcanvas.api.utils;
 
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
+import eu.pb4.mapcanvas.api.core.IconContainer;
+import net.minecraft.block.MapColor;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 
 public final class CanvasUtils {
+    private static final byte[] RGB_TO_MAP = new byte[256*256*256];
+
     public static final int MAP_DATA_SIZE = 128;
     public static final int MAP_ICON_SIZE = 256;
 
@@ -44,6 +48,9 @@ public final class CanvasUtils {
         }
     }
 
+    /**
+     * Draws source on canvas
+     */
     public static void draw(DrawableCanvas canvas, int x, int y, DrawableCanvas source) {
         final int width = source.getWidth();
         final int height = source.getHeight();
@@ -58,11 +65,16 @@ public final class CanvasUtils {
             }
         }
 
-        for (var icon : source.getIcons()) {
-            canvas.createIcon(icon.getType(), icon.isVisible(), icon.getX(), icon.getY(), icon.getRotation(), icon.getText());
+        if (canvas instanceof IconContainer container && source instanceof IconContainer sourceContainer) {
+            for (var icon : sourceContainer.getIcons()) {
+                container.createIcon(icon.getType(), icon.isVisible(), icon.getX(), icon.getY(), icon.getRotation(), icon.getText());
+            }
         }
     }
 
+    /**
+     * Draws source on canvas
+     */
     public static void draw(DrawableCanvas canvas, int x, int y, int width, int height, DrawableCanvas source) {
         final int baseWidth = source.getWidth();
         final int baseHeight = source.getHeight();
@@ -79,12 +91,16 @@ public final class CanvasUtils {
                 }
             }
         }
-
-        for (var icon : source.getIcons()) {
-            canvas.createIcon(icon.getType(), icon.isVisible(), (int) (icon.getX() * deltaX), (int) (icon.getY() * deltaY), icon.getRotation(), icon.getText());
+        if (canvas instanceof IconContainer container && source instanceof IconContainer sourceContainer) {
+            for (var icon : sourceContainer.getIcons()) {
+                container.createIcon(icon.getType(), icon.isVisible(), (int) (icon.getX() * deltaX), (int) (icon.getY() * deltaY), icon.getRotation(), icon.getText());
+            }
         }
     }
 
+    /**
+     * Gets closest to provided argb value canvas color
+     */
     public static CanvasColor findClosestColorARGB(int argb) {
         if ((argb >> 24) == 0x00) {
             return CanvasColor.CLEAR;
@@ -92,36 +108,37 @@ public final class CanvasUtils {
         return findClosestColor(argb);
     }
 
+    /**
+     * Gets closest to provided rgb value canvas color
+     */
     public static CanvasColor findClosestColor(int rgb) {
-        int shortestDistance = Integer.MAX_VALUE;
-        var out = CanvasColor.CLEAR;
-
-        int redColor = (rgb >> 16) & 0xFF;
-        int greenColor = (rgb >> 8) & 0xFF;
-        int blueColor = rgb & 0xFF;
-
-        for (var canvasColor : CanvasColor.values()) {
-            if (canvasColor == CanvasColor.CLEAR || canvasColor == CanvasColor.CLEAR_FORCE) {
-                continue;
-            }
-
-            var tmpColor = canvasColor.getRgbColor();
-
-            int blueCanvas = (tmpColor >> 16) & 0xFF;
-            int greenCanvas = (tmpColor >> 8) & 0xFF;
-            int redCanvas = tmpColor & 0xFF;
-
-            int distance = MathHelper.square(redCanvas - redColor) + MathHelper.square(greenCanvas - greenColor) + MathHelper.square(blueCanvas - blueColor);
-
-            if (distance < shortestDistance) {
-                out = canvasColor;
-                shortestDistance = distance;
-            }
-        }
-
-        return out;
+        return CanvasColor.values()[Byte.toUnsignedInt(findClosestRawColor(rgb))];
     }
 
+    /**
+     * Gets closest to provided argb value canvas color (as byte/raw value)
+     */
+    public static byte findClosestRawColorARGB(int argb) {
+        if ((argb >> 24) == 0x00) {
+            return 0x00;
+        }
+        return findClosestRawColor(argb);
+    }
+
+    /**
+     * Gets closest to provided rgb value canvas color (as byte/raw value)
+     */
+    public static byte findClosestRawColor(int rgb) {
+        rgb = rgb & 0xFFFFFF;
+        if (RGB_TO_MAP[rgb] == 0) {
+            RGB_TO_MAP[rgb] = findClosestColorMath(rgb).getRenderColor();
+        }
+        return RGB_TO_MAP[rgb];
+    }
+
+    /**
+     * Converts canvas to nbt
+     */
     public static NbtCompound toNbt(DrawableCanvas canvas) {
         var nbt = new NbtCompound();
         final int width = canvas.getWidth();
@@ -141,28 +158,64 @@ public final class CanvasUtils {
 
         nbt.putByteArray("Data", data);
 
-        var iconsSource = canvas.getIcons();
+        if (canvas instanceof IconContainer iconContainer) {
+            var iconsSource = iconContainer.getIcons();
 
-        if (!iconsSource.isEmpty()) {
-            var icons = new NbtList();
+            if (!iconsSource.isEmpty()) {
+                var icons = new NbtList();
 
-            for (var icon : iconsSource) {
-                var iconNbt = new NbtCompound();
-                iconNbt.putByte("Type", icon.getType().getId());
-                iconNbt.putBoolean("Vis", icon.isVisible());
-                iconNbt.putInt("X", icon.getX());
-                iconNbt.putInt("Y", icon.getY());
-                iconNbt.putByte("Rot", icon.getRotation());
-                if (icon.getText() != null) {
-                    iconNbt.putString("Text", Text.Serializer.toJson(icon.getText()));
+                for (var icon : iconsSource) {
+                    var iconNbt = new NbtCompound();
+                    iconNbt.putByte("Type", icon.getType().getId());
+                    iconNbt.putBoolean("Vis", icon.isVisible());
+                    iconNbt.putInt("X", icon.getX());
+                    iconNbt.putInt("Y", icon.getY());
+                    iconNbt.putByte("Rot", icon.getRotation());
+                    if (icon.getText() != null) {
+                        iconNbt.putString("Text", Text.Serializer.toJson(icon.getText()));
+                    }
+
+                    icons.add(iconNbt);
                 }
 
-                icons.add(iconNbt);
+                nbt.put("Icons", icons);
             }
-
-            nbt.put("Icons", icons);
         }
 
         return nbt;
+    }
+
+    private static CanvasColor findClosestColorMath(int rgb) {
+        int shortestDistance = Integer.MAX_VALUE;
+        var out = CanvasColor.CLEAR;
+
+        final int redColor = (rgb >> 16) & 0xFF;
+        final int greenColor = (rgb >> 8) & 0xFF;
+        final int blueColor = rgb & 0xFF;
+
+        final var array = CanvasColor.values();
+        final int length = array.length;
+
+        for (int i = 0; i < length; i++) {
+            final var canvasColor = array[i];
+            if (canvasColor.getColor() == MapColor.CLEAR) {
+                continue;
+            }
+
+            final int tmpColor = canvasColor.getRgbColor();
+
+            final int redCanvas = (tmpColor >> 16) & 0xFF;
+            final int greenCanvas = (tmpColor >> 8) & 0xFF;
+            final int blueCanvas = (tmpColor) & 0xFF;
+
+            final int distance = MathHelper.square(redCanvas - redColor) + MathHelper.square(greenCanvas - greenColor) + MathHelper.square(blueCanvas - blueColor);
+
+            if (distance < shortestDistance) {
+                out = canvasColor;
+                shortestDistance = distance;
+            }
+        }
+
+        return out;
     }
 }

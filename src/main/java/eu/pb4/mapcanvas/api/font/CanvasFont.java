@@ -19,11 +19,19 @@ public interface CanvasFont {
      * @return width of text in pixels
      */
     default int getTextWidth(String text, double size) {
-        int posX = 0;
-        for (var character : text.codePoints().toArray()) {
-            posX += getGlyphWidth(character, size, 2);
+        if (text.isEmpty()) {
+            return 0;
         }
-        return posX;
+        int posX = 0;
+
+        var array = text.codePoints().toArray();
+        final int length = array.length - 1;
+
+        for (int i = 0; i < length; i++) {
+            posX += this.getGlyphWidth(array[i], size, 2);
+        }
+
+        return posX + this.getGlyphWidth(array[length], size, 0);
     }
 
     /**

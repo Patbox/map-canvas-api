@@ -264,7 +264,14 @@ public final class CanvasColor {
         this.color = color;
         this.brightness = brightness;
         this.renderColor = color.getRenderColorByte(this.brightness);
-        this.rgbColor = color.getRenderColor(brightness);
+
+        var bgr = color.getRenderColor(brightness);
+
+        final int redCanvas = (bgr) & 0xFF;
+        final int greenCanvas = (bgr >> 8) & 0xFF;
+        final int blueCanvas = (bgr >> 16) & 0xFF;
+
+        this.rgbColor = redCanvas << 16 | greenCanvas << 8 | blueCanvas;
 
         BY_RENDER_COLOR[Byte.toUnsignedInt(this.renderColor)] = this;
     }
@@ -273,19 +280,19 @@ public final class CanvasColor {
         return BY_RENDER_COLOR;
     }
 
-    public MapColor getColor() {
+    public final MapColor getColor() {
         return this.color;
     }
 
-    public MapColor.Brightness getBrightness() {
+    public final MapColor.Brightness getBrightness() {
         return this.brightness;
     }
 
-    public byte getRenderColor() {
+    public final byte getRenderColor() {
         return this.renderColor;
     }
 
-    public int getRgbColor() { return this.rgbColor; }
+    public final int getRgbColor() { return this.rgbColor; }
 
     public static CanvasColor getFromRaw(byte renderColor) {
         return BY_RENDER_COLOR[Byte.toUnsignedInt(renderColor)];

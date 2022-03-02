@@ -33,35 +33,6 @@ public interface DrawableCanvas {
 
     int getWidth();
 
-    default int getIconHeight() {
-        return this.getHeight() * 2;
-    }
-
-    default int getIconWidth() {
-        return this.getWidth() * 2;
-    }
-
-
-    default CanvasIcon createIcon(MapIcon.Type type, int x, int y) {
-        return this.createIcon(type, x, y, (byte) 0, null);
-    }
-
-    default CanvasIcon createIcon(MapIcon.Type type, int x, int y, @Nullable Text text) {
-        return this.createIcon(type, x, y, (byte) 0, text);
-    }
-
-    default CanvasIcon createIcon(MapIcon.Type type, int x, int y, byte rotation, @Nullable Text text) {
-        return this.createIcon(type, true, x, y,  (byte) 0, text);
-    }
-
-    Collection<CanvasIcon> getIcons();
-
-    CanvasIcon createIcon(MapIcon.Type type, boolean visible, int x, int y, byte rotation, @Nullable Text text);
-
-    CanvasIcon createIcon();
-
-    void removeIcon(CanvasIcon icon);
-
     default CanvasImage copy() {
         final var width = this.getWidth();
         final var height = this.getHeight();
