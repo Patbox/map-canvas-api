@@ -8,8 +8,10 @@
     "EntityTrackerUpdateS2CPacketAccessor",
     "ItemFrameEntityAccessor",
     "PlayerInteractEntityC2SPacketAccessor",
+    "PlayerManagerMixin",
     "ServerPlayerEntityMixin",
-    "ServerPlayNetworkHandlerMixin"
+    "ServerPlayNetworkHandlerMixin",
+    "SlimeEntityAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

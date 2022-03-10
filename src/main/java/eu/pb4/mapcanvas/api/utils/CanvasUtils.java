@@ -9,6 +9,8 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 
+import java.awt.image.BufferedImage;
+
 public final class CanvasUtils {
     private static final byte[] RGB_TO_MAP = new byte[256*256*256];
 
@@ -183,6 +185,23 @@ public final class CanvasUtils {
         }
 
         return nbt;
+    }
+
+    public static BufferedImage toImage(DrawableCanvas canvas) {
+        var image = new BufferedImage(canvas.getWidth(), canvas.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        final int width = canvas.getWidth();
+        final int height = canvas.getHeight();
+
+        for (var x = 0; x < width; x++) {
+            for (var y = 0; y < height; y++) {
+                var color = canvas.get(x, y);
+
+                if (color.getColor() != MapColor.CLEAR) {
+                    image.setRGB(x, y, color.getRgbColor() | 0xFF000000);
+                }
+            }
+        }
+        return image;
     }
 
     private static CanvasColor findClosestColorMath(int rgb) {

@@ -13,8 +13,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerPlayNetworkHandler.class)
-public class ServerPlayNetworkHandlerMixin {
-    @Shadow public ServerPlayerEntity player;
+public abstract class ServerPlayNetworkHandlerMixin {
+    @Shadow
+    public ServerPlayerEntity player;
 
     @Inject(method = "onPlayerInteractEntity", at = @At("TAIL"))
     private void mapcanvas_handleDisplay(PlayerInteractEntityC2SPacket packet, CallbackInfo ci) {
@@ -24,15 +25,18 @@ public class ServerPlayNetworkHandlerMixin {
         if (display != null) {
             packet.handle(new PlayerInteractEntityC2SPacket.Handler() {
                 @Override
-                public void interact(Hand hand) {}
-
-                @Override
-                public void interactAt(Hand hand, Vec3d pos) {
-                    display.interactAt(player, id, pos, hand);
+                public void interact(Hand hand) {
                 }
 
                 @Override
-                public void attack() { }
+                public void interactAt(Hand hand, Vec3d pos) {
+                    display.interactAt(player, id, pos, hand, false);
+                }
+
+                @Override
+                public void attack() {
+                    display.interactAt(player, id, null, Hand.MAIN_HAND, true);
+                }
             });
         }
     }

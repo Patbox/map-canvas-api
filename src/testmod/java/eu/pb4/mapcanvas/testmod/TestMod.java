@@ -10,31 +10,32 @@ import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import eu.pb4.mapcanvas.impl.font.BitmapFont;
 import eu.pb4.mapcanvas.impl.font.RawBitmapFontSerializer;
+import eu.pb4.mapcanvas.testmod.advancedgui.*;
 import eu.pb4.polymer.api.utils.PolymerUtils;
+import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.block.MapColor;
-import net.minecraft.item.DyeItem;
-import net.minecraft.item.Items;
-import net.minecraft.item.map.MapIcon;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.text.LiteralText;
-import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import org.apache.commons.io.FileUtils;
 
 import javax.imageio.ImageIO;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.zip.ZipFile;
 
@@ -45,44 +46,48 @@ public class TestMod implements ModInitializer {
 
     private static final Random RANDOM = new Random();
 
-    private final PlayerCanvas canvas = DrawableCanvas.create(4, 3);
-    private final DrawableCanvas drawableSurface = new CanvasImage(4 * CanvasUtils.MAP_DATA_SIZE, 3 * CanvasUtils.MAP_DATA_SIZE);
-    private CanvasIcon[] icons;
+    private final PlayerCanvas canvas = DrawableCanvas.create(6, 4);
+
     private VirtualDisplay display = null;
-    private CanvasImage tater;
-    private CanvasIcon fpsIcon;
-    private CanvasFont font;
-    private CanvasFont fontHd;
+
     private int msPerFrame = 1000 / 10;
     private CanvasFont fontUnsanded;
+    private CanvasImage lastImage = null;
     private CanvasImage logo;
-    private CanvasImage modrinth;
+    private CanvasFont font;
+    private CanvasFont fontHd;
+    private CanvasImage tater;
+    private volatile ActiveRenderer currentRenderer;
+    private List<Pair<String, ActiveRenderer>> renderers = new ArrayList<>();
+    private final MenuRenderer menuRenderer = new MenuRenderer(this::setCurrentRenderer, renderers);
+    private List<Runnable> runPreRender = new ArrayList<>();
+    private Thread rendererThread;
+    private volatile boolean activeRenderer = false;
+
 
     private int test(CommandContext<ServerCommandSource> ctx) {
         try {
             var dir = IntegerArgumentType.getInteger(ctx, "dir");
             var rot = IntegerArgumentType.getInteger(ctx, "rot");
             if (display != null) {
-                this.display.removePlayer(ctx.getSource().getPlayer());
+                this.display.destroy();
             }
             System.out.println(dir);
 
-            VirtualDisplay.InteractionCallback callback = (player, x, y) -> {
-                var stack = player.getMainHandStack();
-                if (stack.isEmpty()) {
-                    return;
-                }
-
-                var count = stack.getCount();
-                if (stack.getItem() instanceof DyeItem dyeItem) {
-                    CanvasUtils.fill(this.drawableSurface, x - count + 1, y - count + 1, x + count, y + count, CanvasColor.from(dyeItem.getColor().getMapColor(), MapColor.Brightness.HIGH));
-                } else if (stack.getItem() == Items.SPONGE) {
-                    CanvasUtils.fill(this.drawableSurface, x - count + 1, y - count + 1, x + count, y + count, CanvasColor.CLEAR);
-                }
+            VirtualDisplay.TypedInteractionCallback callback = (player, type, x, y) -> {
+                this.runPreRender.add(() -> {
+                    if (x >= canvas.getWidth() - 32 && y < 32) {
+                        this.setCurrentRenderer(this.menuRenderer);
+                    } else {
+                        this.currentRenderer.onClick(player, type, x, y);
+                    }
+                });
             };
 
             this.display = VirtualDisplay.of(this.canvas, new BlockPos(ctx.getSource().getPosition()), Direction.byId(dir), rot, true, callback);
-            this.display.addPlayer(ctx.getSource().getPlayer());
+            for (var player : ctx.getSource().getServer().getPlayerManager().getPlayerList()) {
+                this.display.addPlayer(player);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -108,6 +113,19 @@ public class TestMod implements ModInitializer {
                                 return 0;
                             }))
             );
+
+            dispatcher.register(
+                    literal("saveimage").executes((ctx -> {
+                        var image = CanvasUtils.toImage(this.lastImage);
+
+                        try {
+                            ImageIO.write(image, "png", Files.newOutputStream(FabricLoader.getInstance().getGameDir().resolve("output.png"), StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        return 0;
+                    }))
+            );
         });
 
         ServerPlayConnectionEvents.JOIN.register((ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server) -> {
@@ -132,21 +150,12 @@ public class TestMod implements ModInitializer {
             e.printStackTrace();
         }
 
-        try {
-            this.modrinth = CanvasImage.from(ImageIO.read(new URL("https://pbs.twimg.com/media/FMZvRSUWUAE2JAd?format=png")));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
 
         try {
             this.logo = CanvasImage.from(ImageIO.read(Files.newInputStream(FabricLoader.getInstance().getModContainer("map-canvas-api").get().getPath("assets/icon.png"))));
         } catch (Exception e) {
             e.printStackTrace();
         }
-        var list = new ArrayList<CanvasIcon>();
-
-        this.fpsIcon = this.canvas.createIcon(MapIcon.Type.TARGET_POINT, 32, 32);
 
         try {
             var vanillaZip = PolymerUtils.getClientJar();
@@ -224,87 +233,73 @@ public class TestMod implements ModInitializer {
         }
 
 
-        https://github.com/Compliance-Resource-Pack/Compliance-Java-32x/releases/download/beta-20/Compliance-32x-Java-Beta-20.zip
+        ServerLifecycleEvents.SERVER_STARTED.register((s) -> {
+            this.setCurrentRenderer(this.menuRenderer);
+            this.renderers.add(new Pair<>("TaterDemo", new TaterDemoRenderer(this.tater, this.fontHd, this.logo)));
+            this.renderers.add(new Pair<>("SimpleSurface", new SurfaceRenderer()));
+            this.renderers.add(new Pair<>("Raycast", new RaycastRenderer(s)));
 
-        for (int i = 0; i < 256; i++) {
-            Text text = i % 32 == 0 ? new LiteralText("" + i) : null;
-            list.add(this.canvas.createIcon(MapIcon.Type.values()[i % MapIcon.Type.values().length], i * 3, this.canvas.getHeight(), (byte) i, text));
-        }
+            if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
+                this.renderers.add(new Pair<>("Client Framebuffer", new ClientRenderer()));
+            }
 
-        this.icons = list.toArray(new CanvasIcon[0]);
+            this.startUpdateThread();
+        });
 
-        this.startUpdateThread();
+        ServerLifecycleEvents.SERVER_STOPPED.register((s) -> {
+            this.setCurrentRenderer(this.menuRenderer);
+            this.renderers.clear();
+            this.activeRenderer = false;
+        });
+
     }
 
-    public void update(long time, int displayFps, int frame) {
-        var canvas = new CanvasImage(this.canvas.getWidth(), this.canvas.getHeight());
-
-        /*var color = switch ((int) (time / 1000 % 4)) {
-            case 0 -> CanvasColor.DIAMOND_BLUE_LOWEST;
-            case 1 -> CanvasColor.DIAMOND_BLUE_LOW;
-            case 2 -> CanvasColor.DIAMOND_BLUE_NORMAL;
-            case 3 -> CanvasColor.DIAMOND_BLUE_HIGH;
-            default -> CanvasColor.RED_HIGH;
-        }*/;
-        CanvasUtils.clear(canvas, CanvasColor.BLACK_LOWEST);
-
-        CanvasUtils.fill(canvas, 32, 32, this.canvas.getWidth() - 32, this.canvas.getHeight() - 32, CanvasColor.CLEAR_FORCE);
-
-        for (int i = 0; i < 256; i++) {
-            var icon = this.icons[i];
-
-            double input = time / 300d + i / 10d;
-            var sin = Math.sin(input);
-            var deltaSin = Math.sin(input + 10) - sin;
-
-            icon.move(icon.getX(), (int) (this.canvas.getHeight() + 40 * sin), (byte) (4 + 1 * -deltaSin));
+    public void update(long time, int displayFps, int frame) throws InterruptedException {
+        if (this.currentRenderer == null) {
+            return;
         }
 
-        if (this.tater != null) {
-            var sin = Math.sin((double) time / 300);
-            var cos = Math.sin((double) time / 500 + 100000);
+        try {
+            var canvas = new CanvasImage(this.canvas.getWidth(), this.canvas.getHeight());
+            this.currentRenderer.render(this.canvas, canvas, time, displayFps, frame);
 
-            CanvasUtils.draw(canvas, (int) (this.canvas.getWidth() / 2 + this.tater.getWidth() * sin), (int) (this.tater.getHeight() / 2 + 50 * cos), this.tater);
-            CanvasUtils.draw(canvas, (int) (this.canvas.getWidth() / 2 + this.tater.getWidth() * cos), (int) (this.tater.getHeight() / 2 + 50 * sin), 64, 64, this.tater);
+            if (this.currentRenderer != this.menuRenderer) {
+                CanvasUtils.fill(canvas, canvas.getWidth() - 32, 0, canvas.getWidth(), 32, CanvasColor.RED_LOW);
+                DefaultFonts.UNSANDED.drawGlyph(canvas, 'X', canvas.getWidth() - 28, 4, 24, 0, CanvasColor.BLACK_HIGH);
+            }
+            CanvasUtils.draw(this.canvas, 0, 0, canvas);
+            this.lastImage = canvas;
+            this.canvas.sendUpdates();
+        } catch (Exception e) {
+            e.printStackTrace();
+            Thread.sleep(1000);
         }
-
-        this.fpsIcon.move((this.fpsIcon.getX() + 2) % (canvas.getWidth() * 2), (this.fpsIcon.getY() + 2) % (canvas.getHeight() * 2), (byte) 0);
-
-        CanvasUtils.draw(canvas, 0, 0, this.drawableSurface);
-        DefaultFonts.VANILLA.drawText(canvas, "Hello World! 1234 \n[ą]ęść AĄĘŚĆ \u00a1", 65, 33, 8, CanvasColor.BLACK_NORMAL);
-        DefaultFonts.VANILLA.drawText(canvas, "Hello World! 1234 \n[ą]ęść AĄĘŚĆ \u00a1", 64, 32, 8, CanvasColor.RED_HIGH);
-        DefaultFonts.VANILLA.drawText(canvas, "\uD83D\uDDE1\uD83C\uDFF9\uD83E\uDE93\uD83D\uDD31\uD83C\uDFA3\uD83E\uDDEA⚗ 大\t", 256, 32, 8, CanvasColor.RED_HIGH);
-        DefaultFonts.VANILLA.drawText(canvas, "Hello World! 1234 \n[ą]ęść AĄĘŚĆ \u00a1", 64, 64, 16, CanvasColor.RED_HIGH);
-
-        this.fontHd.drawText(canvas, "Hello World! 1234 \n[ą]ęść AĄĘŚĆ \u00a1", 64, 128, 8, CanvasColor.ORANGE_HIGH);
-
-        this.fontHd.drawText(canvas, "Hello World! 1234 \n[ą]ęść AĄĘŚĆ \u00a1", 64, 128 + 64, 16, CanvasColor.ORANGE_HIGH);
-        this.fontUnsanded.drawText(canvas, "Tater best [:)  ]", 64, 128 * 2 + 32, 24, CanvasColor.BLACK_NORMAL);
-
-        if (this.logo != null) {
-            CanvasUtils.draw(canvas, canvas.getWidth() - 64, canvas.getHeight() - 64, 64, 64, this.logo);
-        }
-
-        CanvasUtils.draw(this.canvas, 0, 0, canvas);
-        this.canvas.sendUpdates();
     }
 
     private void startUpdateThread() {
-        Thread thread = new Thread("New Thread") {
+        this.activeRenderer = true;
+        this.rendererThread = new Thread("New Thread") {
             public void run() {
                 try {
                     int displayFps = 0;
                     int fps = 0;
                     var lastTime = System.currentTimeMillis() / 1000;
 
-                    while (true) {
+                    while (TestMod.this.activeRenderer) {
                         var time = System.currentTimeMillis();
+                        var preRender = TestMod.this.runPreRender;
+                        if (!preRender.isEmpty()) {
+                            TestMod.this.runPreRender = new ArrayList<>();
+                            for (var r : preRender) {
+                                r.run();
+                            }
+                        }
+
                         TestMod.this.update(time, displayFps, fps);
                         if (lastTime != time / 1000) {
                             displayFps = fps;
                             fps = 0;
                             lastTime = time / 1000;
-                            fpsIcon.setText(new LiteralText("" + displayFps));
                         }
                         fps++;
 
@@ -317,8 +312,16 @@ public class TestMod implements ModInitializer {
             }
         };
 
-        thread.setDaemon(true);
-        thread.start();
+        this.rendererThread.setDaemon(true);
+        this.rendererThread.start();
     }
 
+
+    protected void setCurrentRenderer(ActiveRenderer renderer) {
+        this.currentRenderer = null;
+        CanvasUtils.clear(this.canvas);
+        this.canvas.clearIcons();
+        renderer.setup(this.canvas);
+        this.currentRenderer = renderer;
+    }
 }

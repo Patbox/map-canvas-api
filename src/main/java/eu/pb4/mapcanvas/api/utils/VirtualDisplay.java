@@ -2,25 +2,28 @@ package eu.pb4.mapcanvas.api.utils;
 
 import eu.pb4.mapcanvas.api.core.CombinedPlayerCanvas;
 import eu.pb4.mapcanvas.api.core.PlayerCanvas;
+import eu.pb4.mapcanvas.impl.MapCanvasImpl;
 import eu.pb4.mapcanvas.impl.MapIdManager;
 import eu.pb4.mapcanvas.impl.PlayerInterface;
 import eu.pb4.mapcanvas.mixin.EntityAccessor;
 import eu.pb4.mapcanvas.mixin.EntityTrackerUpdateS2CPacketAccessor;
 import eu.pb4.mapcanvas.mixin.ItemFrameEntityAccessor;
+import eu.pb4.mapcanvas.mixin.SlimeEntityAccessor;
 import io.netty.util.internal.shaded.org.jctools.util.UnsafeAccess;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.network.Packet;
 import net.minecraft.network.packet.s2c.play.EntitiesDestroyS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityTrackerUpdateS2CPacket;
+import net.minecraft.network.packet.s2c.play.TeamS2CPacket;
+import net.minecraft.scoreboard.AbstractTeam;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.ClickType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -38,11 +41,11 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
     private final BlockPos pos;
     private final Direction direction;
     private final int rotation;
-    private final InteractionCallback interactionCallback;
+    private final TypedInteractionCallback interactionCallback;
     private final Set<ServerPlayerEntity> players = new HashSet<>();
     private IntList clickableIds = new IntArrayList();
 
-    protected VirtualDisplay(BlockPos pos, boolean glowing, Direction direction, int rotation, InteractionCallback callback) {
+    protected VirtualDisplay(BlockPos pos, boolean glowing, Direction direction, int rotation, TypedInteractionCallback callback) {
         this.glowing = glowing;
         this.pos = pos;
         this.direction = direction;
@@ -53,11 +56,12 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
     public final void addPlayer(ServerPlayerEntity player) {
         if (!player.isDisconnected()) {
             for (var holder : this.holders) {
-                player.networkHandler.sendPacket(holder.packet1);
-                player.networkHandler.sendPacket(holder.packet2);
-                if (holder.entityId2 != -1) {
-                    player.networkHandler.sendPacket(holder.packet3);
-                    player.networkHandler.sendPacket(holder.packet4);
+                player.networkHandler.sendPacket(holder.spawnPacket);
+                player.networkHandler.sendPacket(holder.trackerPacket);
+                for (var detector : holder.clickDetectors) {
+                    player.networkHandler.sendPacket(detector.spawnPacket);
+                    player.networkHandler.sendPacket(detector.trackerPacket);
+                    player.networkHandler.sendPacket(TeamS2CPacket.changePlayerTeam(MapCanvasImpl.FAKE_TEAM, detector.name, TeamS2CPacket.Operation.ADD));
                 }
             }
             this.players.add(player);
@@ -68,6 +72,11 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
     public final void removePlayer(ServerPlayerEntity player) {
         if (!player.isDisconnected()) {
             player.networkHandler.sendPacket(new EntitiesDestroyS2CPacket(this.ids));
+            for (var holder : this.holders) {
+                for (var detector : holder.clickDetectors) {
+                    player.networkHandler.sendPacket(TeamS2CPacket.changePlayerTeam(MapCanvasImpl.FAKE_TEAM, detector.name, TeamS2CPacket.Operation.REMOVE));
+                }
+            }
         }
         this.players.remove(player);
         ((PlayerInterface) player).mapcanvas_removeDisplay(this.clickableIds);
@@ -91,10 +100,10 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         this.ids.add(holder.entityId);
         this.holderById.put(holder.entityId, holder);
 
-        if (holder.entityId2 != -1) {
-            this.ids.add(holder.entityId2);
-            this.clickableIds.add(holder.entityId2);
-            this.holderById.put(holder.entityId2, holder);
+        for (var detector : holder.clickDetectors) {
+            this.ids.add(detector.entityId);
+            this.clickableIds.add(detector.entityId);
+            this.holderById.put(detector.entityId, holder);
         }
     }
 
@@ -108,7 +117,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         return of(canvas, pos, direction, rotation, glowing, null);
     }
 
-    public static final VirtualDisplay of(PlayerCanvas canvas, BlockPos pos, Direction direction, int rotation, boolean glowing, @Nullable InteractionCallback callback) {
+    public static final VirtualDisplay of(PlayerCanvas canvas, BlockPos pos, Direction direction, int rotation, boolean glowing, @Nullable TypedInteractionCallback callback) {
         if (canvas instanceof CombinedPlayerCanvas combinedCanvas) {
             return new Combined(combinedCanvas, pos, glowing, direction, Math.abs(rotation % 4), callback);
         } else {
@@ -116,56 +125,83 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         }
     }
 
+    public static final VirtualDisplay of(PlayerCanvas canvas, BlockPos pos, Direction direction, int rotation, boolean glowing, @Nullable InteractionCallback callback) {
+        return of(canvas, pos, direction, rotation, glowing, (TypedInteractionCallback) callback);
+    }
+
     @ApiStatus.Internal
-    public final void interactAt(ServerPlayerEntity player, int id, Vec3d pos, Hand hand) {
-        if (this.interactionCallback != null) {
+    public final void interactAt(ServerPlayerEntity player, int id, @Nullable Vec3d pos, Hand hand, boolean isAttack) {
+        if (this.interactionCallback != null && hand == Hand.MAIN_HAND) {
+            if (pos == null) {
+                pos = Vec3d.ZERO;
+            }
+
             var holder = this.holderById.get(id);
 
-            double sourceX, sourceY, tmp;
+            int deltaX = 0, deltaY = 0;
 
+            for (var clickable : holder.clickDetectors) {
+                if (clickable.entityId == id) {
+                    deltaX = clickable.deltaX;
+                    deltaY = clickable.deltaY;
+                }
+            }
+
+            double sourceX, sourceY, tmp;
             if (this.direction.getAxis() == Direction.Axis.X) {
-                sourceX = 0.5 - pos.z * this.direction.getOffsetX();
-                sourceY = 1 - pos.y;
-            } if (this.direction.getAxis() == Direction.Axis.Z) {
-                sourceX = 0.5 - pos.x * -this.direction.getOffsetZ();
-                sourceY = 1 - pos.y;
+                sourceX = 0.25 + pos.z * -this.direction.getOffsetX();
+                sourceY = 0.5 - pos.y;
+            } else if (this.direction.getAxis() == Direction.Axis.Z) {
+                sourceX = 0.25 - pos.x * -this.direction.getOffsetZ();
+                sourceY = 0.5 - pos.y;
             } else {
-                sourceX = 0.5 + pos.x;
-                sourceY = 0.5 + pos.z;
+                sourceX = 0.25 + pos.x;
+                sourceY = 0.25 + pos.z;
             }
 
             switch (rotation) {
                 case 1 -> {
-                    tmp = 1 - sourceX;
+                    tmp = 0.5 - sourceX;
                     sourceX = sourceY;
                     sourceY = tmp;
                 }
                 case 2 -> {
-                    sourceX = 1 - sourceX;
-                    sourceY = 1 - sourceY;
+                    sourceX = 0.5 - sourceX;
+                    sourceY = 0.5 - sourceY;
                 }
                 case 3 -> {
                     tmp = sourceX;
-                    sourceX = 1 - sourceY;
+                    sourceX = 0.5 - sourceY;
                     sourceY = tmp;
                 }
             }
 
-            int x = (int) ((sourceX + holder.xOffset)  * CanvasUtils.MAP_DATA_SIZE);
-            int y = (int) ((sourceY + holder.yOffset) * CanvasUtils.MAP_DATA_SIZE);
-            this.interactionCallback.onClick(player, x, y);
+            int x = (int) ((sourceX + holder.xOffset) * CanvasUtils.MAP_DATA_SIZE) + deltaX * 64;
+            int y = (int) ((sourceY + holder.yOffset) * CanvasUtils.MAP_DATA_SIZE) + deltaY * 64;
+            this.interactionCallback.onClick(player, isAttack ? ClickType.LEFT : ClickType.RIGHT, x, y);
 
         }
     }
 
-    public interface InteractionCallback {
+    public interface InteractionCallback extends TypedInteractionCallback {
         void onClick(ServerPlayerEntity player, int x, int y);
+
+        @Override
+        default void onClick(ServerPlayerEntity player, ClickType type, int x, int y) {
+            if (type == ClickType.RIGHT) {
+                this.onClick(player, x, y);
+            }
+        }
+    }
+
+    public interface TypedInteractionCallback {
+        void onClick(ServerPlayerEntity player, ClickType type, int x, int y);
     }
 
     protected static final class Single extends VirtualDisplay {
         private final PlayerCanvas canvas;
 
-        private Single(PlayerCanvas canvas, BlockPos pos, boolean glowing, Direction direction, int rotation, InteractionCallback callback) {
+        private Single(PlayerCanvas canvas, BlockPos pos, boolean glowing, Direction direction, int rotation, TypedInteractionCallback callback) {
             super(pos, glowing, direction, rotation, callback);
             this.canvas = canvas;
             this.addHolder(this.canvas, 0, 0);
@@ -192,7 +228,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         private final int height;
         private final CombinedPlayerCanvas canvas;
 
-        private Combined(CombinedPlayerCanvas canvas, BlockPos pos, boolean glowing, Direction direction, int rotation, InteractionCallback callback) {
+        private Combined(CombinedPlayerCanvas canvas, BlockPos pos, boolean glowing, Direction direction, int rotation, TypedInteractionCallback callback) {
             super(pos, glowing, direction, rotation, callback);
             this.width = canvas.getSectionsWidth();
             this.height = canvas.getSectionsHeight();
@@ -223,7 +259,9 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         }
     }
 
-    protected record Holder(int entityId, int entityId2, int xOffset, int yOffset, UUID uuid, Packet<?> packet1, Packet<?> packet2, Packet<?> packet3, Packet<?> packet4) {
+    protected record ClickDetector(int entityId, String name, int deltaX, int deltaY, Packet<?> spawnPacket, Packet<?> trackerPacket) {};
+
+    protected record Holder(int entityId, int xOffset, int yOffset, UUID uuid, Packet<?> spawnPacket, Packet<?> trackerPacket, ClickDetector[] clickDetectors) {
 
         public static Holder of(PlayerCanvas canvas, int xOffset, int yOffset, BlockPos pos, Direction direction, int rotation, boolean glowing, boolean isClickable) {
             final int finalXOffset = xOffset;
@@ -275,31 +313,76 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
                             new DataTracker.Entry<>(EntityAccessor.getFlags(), (byte) (1 << 5))
                     )
             );
-            EntitySpawnS2CPacket entitySpawn2;
-            EntityTrackerUpdateS2CPacket trackerPacket2;
-            int entityId2;
+
+            ClickDetector[] clickDetectors;
+
             if (isClickable) {
-                entityId2 = MapIdManager.requestEntityId();
+                var centerPos = Vec3d.ofCenter(pos);
 
-                entitySpawn2 = new EntitySpawnS2CPacket(entityId2, UUID.randomUUID(),
-                        pos.getX() + x + 0.5 + -direction.getOffsetX() * 0.92, pos.getY() + y + -direction.getOffsetY() * 0.92, pos.getZ() + z + 0.5 + -direction.getOffsetZ() * 0.92, 0f, 0f,
-                        EntityType.FALLING_BLOCK,
-                        Block.getRawIdFromState(Blocks.CHEST.getDefaultState()), Vec3d.ZERO);
+                clickDetectors = new ClickDetector[4];
 
-                trackerPacket2 = createClass(EntityTrackerUpdateS2CPacket.class);
-                ((EntityTrackerUpdateS2CPacketAccessor) trackerPacket2).setId(entityId2);
-                ((EntityTrackerUpdateS2CPacketAccessor) trackerPacket2).setTrackedValues(
-                        List.of(
-                                new DataTracker.Entry<>(EntityAccessor.getNoGravity(), true)
-                        )
-                );
+                for (int i = 0; i < 4; i++) {
+                    int partX = i % 2;
+                    int partY = i / 2;
+                    double deltaX = partX / 2d - 0.25;
+                    double deltaY = partY / 2d - 0.25;
+                    double xOff, yOff, zOff;
+
+                    switch (rotation) {
+                        case 1 -> {
+                            xOff = deltaX;
+                            deltaX = -deltaY;
+                            deltaY = xOff;
+                        }
+                        case 2 -> {
+                            deltaX = -deltaX;
+                            deltaY = -deltaY;
+                        }
+                        case 3 -> {
+                            xOff = -deltaX;
+                            deltaX = deltaY;
+                            deltaY = xOff;
+                        }
+                    }
+
+                    if (direction.getAxis().isHorizontal()) {
+                        xOff = deltaX * direction.getOffsetZ();
+                        yOff = -deltaY - 0.25;
+                        zOff = -deltaX * direction.getOffsetX();
+                    } else {
+                        xOff = deltaX;
+                        yOff = -0.25;
+                        zOff = deltaY * direction.getOffsetY();
+                    }
+
+
+                    int entityId2 = MapIdManager.requestEntityId();
+                    var uuid2 = UUID.randomUUID();
+                    var entitySpawn2 = new EntitySpawnS2CPacket(entityId2, uuid2,
+                            centerPos.x + x + -direction.getOffsetX() * 0.68 + xOff,
+                            centerPos.y + y + -direction.getOffsetY() * 0.68 + yOff,
+                            centerPos.z + z + -direction.getOffsetZ() * 0.68 + zOff,
+                            0f, 0f,
+                            EntityType.SLIME,
+                            0, Vec3d.ZERO);
+
+                    var trackerPacket2 = createClass(EntityTrackerUpdateS2CPacket.class);
+                    ((EntityTrackerUpdateS2CPacketAccessor) trackerPacket2).setId(entityId2);
+                    ((EntityTrackerUpdateS2CPacketAccessor) trackerPacket2).setTrackedValues(
+                            List.of(
+                                    new DataTracker.Entry<>(EntityAccessor.getNoGravity(), true),
+                                    new DataTracker.Entry<>(SlimeEntityAccessor.getSlimeSize(), 1),
+                                    new DataTracker.Entry<>(EntityAccessor.getFlags(), (byte) (1 << 5))
+                            )
+                    );
+
+                    clickDetectors[i] = new ClickDetector(entityId2, uuid2.toString(), partX, partY, entitySpawn2, trackerPacket2);
+                }
             } else {
-                entityId2 = -1;
-                entitySpawn2 = null;
-                trackerPacket2 = null;
+                clickDetectors = new ClickDetector[0];
             }
 
-            return new Holder(entityId, entityId2, finalXOffset, finalYOffset, UUID.randomUUID(), spawnPacket, trackerPacket, entitySpawn2,  trackerPacket2);
+            return new Holder(entityId, finalXOffset, finalYOffset, UUID.randomUUID(), spawnPacket, trackerPacket, clickDetectors);
         }
     }
 

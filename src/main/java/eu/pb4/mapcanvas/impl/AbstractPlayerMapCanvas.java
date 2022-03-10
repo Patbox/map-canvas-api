@@ -139,9 +139,12 @@ public abstract class AbstractPlayerMapCanvas extends BaseMapCanvas implements P
 
         if (pixelData != null || icons != null) {
             var packet = new MapUpdateS2CPacket(this.mapId, (byte) 0, true, icons, pixelData);
-            for (var player : this.getPlayers()) {
-                if (player.connection.isOpen()) {
-                    player.connection.send(packet);
+            var players = this.getPlayers();
+            synchronized (players) {
+                for (var player : players) {
+                    if (player.connection.isOpen()) {
+                        player.connection.send(packet);
+                    }
                 }
             }
         }
