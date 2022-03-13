@@ -5,10 +5,7 @@ import eu.pb4.mapcanvas.api.core.PlayerCanvas;
 import eu.pb4.mapcanvas.impl.MapCanvasImpl;
 import eu.pb4.mapcanvas.impl.MapIdManager;
 import eu.pb4.mapcanvas.impl.PlayerInterface;
-import eu.pb4.mapcanvas.mixin.EntityAccessor;
-import eu.pb4.mapcanvas.mixin.EntityTrackerUpdateS2CPacketAccessor;
-import eu.pb4.mapcanvas.mixin.ItemFrameEntityAccessor;
-import eu.pb4.mapcanvas.mixin.SlimeEntityAccessor;
+import eu.pb4.mapcanvas.mixin.*;
 import io.netty.util.internal.shaded.org.jctools.util.UnsafeAccess;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -17,11 +14,11 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.network.Packet;
+import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.network.packet.s2c.play.EntitiesDestroyS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityTrackerUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.TeamS2CPacket;
-import net.minecraft.scoreboard.AbstractTeam;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.ClickType;
 import net.minecraft.util.Hand;
@@ -394,5 +391,24 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
             e.printStackTrace();
             return null;
         }
+    }
+    
+    public void handleInteractionPacket(PlayerInteractEntityC2SPacket packet, ServerPlayerEntity player) {
+        var id = ((PlayerInteractEntityC2SPacketAccessor) packet).getEntityId();
+        
+        packet.handle(new PlayerInteractEntityC2SPacket.Handler() {
+            @Override
+            public void interact(Hand hand) {}
+    
+            @Override
+            public void interactAt(Hand hand, Vec3d pos) {
+                VirtualDisplay.this.interactAt(player, id, pos, hand, false);
+            }
+    
+            @Override
+            public void attack() {
+                VirtualDisplay.this.interactAt(player, id, null, Hand.MAIN_HAND, true);
+            }
+        });
     }
 }
