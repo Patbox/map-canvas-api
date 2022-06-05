@@ -153,7 +153,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
                 sourceY = 0.5 - pos.y;
             } else {
                 sourceX = 0.25 + pos.x;
-                sourceY = 0.25 + pos.z;
+                sourceY = 0.25 + pos.z * this.direction.getOffsetY();
             }
 
             switch (rotation) {
@@ -298,7 +298,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
             var spawnPacket = new EntitySpawnS2CPacket(entityId, uuid,
                     pos.getX() + x, pos.getY() + y, pos.getZ() + z, 0f, 0f,
                     glowing ? EntityType.GLOW_ITEM_FRAME : EntityType.ITEM_FRAME,
-                    direction.getId(), Vec3d.ZERO);
+                    direction.getId(), Vec3d.ZERO, 0);
 
 
             var trackerPacket = createClass(EntityTrackerUpdateS2CPacket.class);
@@ -361,7 +361,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
                             centerPos.z + z + -direction.getOffsetZ() * 0.68 + zOff,
                             0f, 0f,
                             EntityType.SLIME,
-                            0, Vec3d.ZERO);
+                            0, Vec3d.ZERO,0);
 
                     var trackerPacket2 = createClass(EntityTrackerUpdateS2CPacket.class);
                     ((EntityTrackerUpdateS2CPacketAccessor) trackerPacket2).setId(entityId2);
@@ -392,8 +392,9 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
             return null;
         }
     }
-    
-    public void handleInteractionPacket(PlayerInteractEntityC2SPacket packet, ServerPlayerEntity player) {
+
+    @ApiStatus.Internal
+    public final void handleInteractionPacket(PlayerInteractEntityC2SPacket packet, ServerPlayerEntity player) {
         var id = ((PlayerInteractEntityC2SPacketAccessor) packet).getEntityId();
         
         packet.handle(new PlayerInteractEntityC2SPacket.Handler() {

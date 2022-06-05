@@ -23,7 +23,8 @@ public class VanillaFontReader {
                     var obj = tmp.getAsJsonObject();
 
                     try {
-                        if (obj.getAsJsonPrimitive("type").getAsString().equals("bitmap")) {
+                        var type = obj.getAsJsonPrimitive("type").getAsString();
+                        if (type.equals("bitmap")) {
                             var path = new Identifier(obj.getAsJsonPrimitive("file").getAsString());
                             var ascent = obj.getAsJsonPrimitive("ascent").getAsInt();
                             var height = 8;
@@ -33,7 +34,11 @@ public class VanillaFontReader {
                                 // NoOp
                             }
 
-                            var texture = ImageIO.read(file.getInputStream(file.getEntry("assets/" + path.getNamespace() + "/textures/" + path.getPath())));
+                            var input = file.getInputStream(file.getEntry("assets/" + path.getNamespace() + "/textures/" + path.getPath()));
+                            if (input == null) {
+                                continue;
+                            }
+                            var texture = ImageIO.read(input);
 
                             var charJson = obj.getAsJsonArray("chars");
                             var charWidth = texture.getWidth() / charJson.get(0).getAsString().length();
@@ -61,6 +66,12 @@ public class VanillaFontReader {
                                         e.printStackTrace();
                                     }
                                 }
+                            }
+                        } else if (type.equals("space")) {
+                            var advances = obj.get("advances").getAsJsonObject();
+
+                            for (var key : advances.keySet()) {
+                                font.characters.put(key.codePointAt(0), new BitmapFont.Glyph(0, 0,0, advances.getAsJsonPrimitive(key).getAsInt(), 0, new boolean[0]));
                             }
                         }
                     } catch (Exception e) {

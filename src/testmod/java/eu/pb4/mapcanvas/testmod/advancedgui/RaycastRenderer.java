@@ -38,7 +38,7 @@ public class RaycastRenderer implements ActiveRenderer {
     public void render(PlayerCanvas outputCanvas, DrawableCanvas canvas, long time, int displayFps, int frame) {
         if (this.entity == null || this.entity.isRemoved()) {
             for (var entity : this.server.getOverworld().iterateEntities()) {
-                if (entity.getCustomName() != null && entity.getCustomName().asString().equals("Camera")) {
+                if (entity.getCustomName() != null && entity.getCustomName().getString().equals("Camera")) {
                     this.entity = entity;
                     return;
                 }

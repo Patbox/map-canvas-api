@@ -38,7 +38,7 @@ public final class DefaultFonts {
         VANILLA = read(path.resolve("vanilla.mcaf"));
         ALT = read(path.resolve("alt.mcaf"));
         ILLAGER_ALT = read(path.resolve("illageralt.mcaf"));
-        UNSANDED = read(path.resolve("unsanded.mcaf"));
+        UNSANDED = FontUtils.merge(read(path.resolve("unsanded.mcaf")), VANILLA);
     }
 
     private static CanvasFont read(Path path) {

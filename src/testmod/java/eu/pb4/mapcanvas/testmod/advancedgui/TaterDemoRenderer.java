@@ -10,7 +10,6 @@ import net.minecraft.item.DyeItem;
 import net.minecraft.item.Items;
 import net.minecraft.item.map.MapIcon;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.ClickType;
 import net.minecraft.util.math.MathHelper;
@@ -23,7 +22,7 @@ public class TaterDemoRenderer implements ActiveRenderer {
     public final CanvasImage tater;
     public final CanvasFont fontHd;
     public final CanvasImage logo;
-    private final DrawableCanvas drawableSurface = new CanvasImage(4 * CanvasUtils.MAP_DATA_SIZE, 3 * CanvasUtils.MAP_DATA_SIZE);
+    private DrawableCanvas drawableSurface;
 
 
     public TaterDemoRenderer(CanvasImage tater, CanvasFont fontHd, CanvasImage logo) {
@@ -38,11 +37,13 @@ public class TaterDemoRenderer implements ActiveRenderer {
 
         var list = new ArrayList<CanvasIcon>();
         for (int i = 0; i < 256; i++) {
-            Text text = i % 32 == 0 ? new LiteralText("" + i) : null;
+            Text text = i % 32 == 0 ? Text.literal("" + i) : null;
             list.add(canvas.createIcon(MapIcon.Type.values()[i % MapIcon.Type.values().length], i * 3, canvas.getHeight(), (byte) i, text));
         }
 
         this.icons = list.toArray(new CanvasIcon[0]);
+
+        this.drawableSurface = new CanvasImage(canvas.getWidth(), canvas.getHeight());
     }
 
     @Override
@@ -51,7 +52,7 @@ public class TaterDemoRenderer implements ActiveRenderer {
 
         CanvasUtils.fill(canvas, 32, 32, outputCanvas.getWidth() - 32, outputCanvas.getHeight() - 32, CanvasColor.CLEAR_FORCE);
 
-        this.fpsIcon.setText(new LiteralText("" + displayFps));
+        this.fpsIcon.setText(Text.literal("" + displayFps));
 
         for (int i = 0; i < 256; i++) {
             var icon = this.icons[i];
@@ -85,6 +86,7 @@ public class TaterDemoRenderer implements ActiveRenderer {
 
         this.fontHd.drawText(canvas, "Hello World! 1234 \n[ą]ęść AĄĘŚĆ \u00a1", 64, 128 + 64, 16, CanvasColor.ORANGE_HIGH);
         DefaultFonts.UNSANDED.drawText(canvas, "Tater best [:)  ]", 64, 128 * 2 + 32, 24, CanvasColor.BLACK_NORMAL);
+        DefaultFonts.UNSANDED.drawText(canvas, "T\u200cater best [:)  ]", 64, 128 * 2 + 32 + 25, 24, CanvasColor.BLACK_NORMAL);
 
         if (this.logo != null) {
             CanvasUtils.draw(canvas, canvas.getWidth() - 64, canvas.getHeight() - 64, 64, 64, this.logo);

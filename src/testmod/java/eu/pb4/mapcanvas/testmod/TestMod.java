@@ -14,7 +14,7 @@ import eu.pb4.mapcanvas.testmod.advancedgui.*;
 import eu.pb4.polymer.api.utils.PolymerUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -96,7 +96,7 @@ public class TestMod implements ModInitializer {
     }
 
     public void onInitialize() {
-        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(
                     literal("test").then(
                             argument("dir", IntegerArgumentType.integer(0, Direction.values().length))

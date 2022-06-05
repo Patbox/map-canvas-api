@@ -55,7 +55,7 @@ public final class BitmapFont implements CanvasFont {
             }
         }
 
-        return (int) ((glyph.fontWidth() + offset) * baseScale);
+        return (int) (((glyph.fontWidth() + offset)) * baseScale);
     }
 
     @Override
@@ -63,7 +63,7 @@ public final class BitmapFont implements CanvasFont {
         return this.characters.containsKey(character);
     }
 
-    public static record Glyph(int width, int height, int ascend, int fontWidth, int logicalHeight, boolean[] texture) {
+    public record Glyph(int width, int height, int ascend, int fontWidth, int logicalHeight, boolean[] texture) {
         public static final Glyph INVALID;
         public static final Glyph EMPTY = new Glyph(0, 0, 0, 0, 0, new boolean[] {});
 

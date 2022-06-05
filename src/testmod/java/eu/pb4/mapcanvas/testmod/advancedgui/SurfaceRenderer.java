@@ -6,7 +6,7 @@ import eu.pb4.mapcanvas.api.core.PlayerCanvas;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.ClickType;
 import net.minecraft.util.math.noise.DoublePerlinNoiseSampler;
-import net.minecraft.world.gen.random.Xoroshiro128PlusPlusRandom;
+import net.minecraft.util.math.random.Xoroshiro128PlusPlusRandom;
 
 
 public class SurfaceRenderer implements ActiveRenderer {
