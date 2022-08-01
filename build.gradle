@@ -145,29 +145,3 @@ publishing {
 		}
 	}
 }
-
-task testmodJar(type: Jar) {
-	from sourceSets.testmod.output
-	destinationDirectory = new File(project.buildDir, "devlibs")
-	archiveClassifier = "testmod"
-}
-
-task remapTestmodJar(type: net.fabricmc.loom.task.RemapJarTask, dependsOn: testmodJar) {
-	input = testmodJar.archiveFile
-	archiveClassifier = "testmod"
-	addNestedDependencies = false
-}
-build.dependsOn remapTestmodJar
-
-remapTestmodJar {
-	def testModJarTasks = []
-
-	subprojects {
-		if (it.name == "deprecated" || !it.file("src/testmod").exists()) return
-
-		testModJarTasks += it.tasks.remapTestmodJar
-	}
-
-	nestedJars.setFrom(testModJarTasks)
-	addNestedDependencies = true
-}
