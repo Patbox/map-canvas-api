@@ -8,35 +8,53 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.util.math.MathHelper;
 
 public final class BitmapFont implements CanvasFont {
-    public static final BitmapFont EMPTY = new BitmapFont(Glyph.INVALID);
+    public static final BitmapFont EMPTY = new BitmapFont(Glyph.INVALID, Metadata.empty());
 
     protected final Int2ObjectMap<Glyph> characters = new Int2ObjectOpenHashMap<>();
     public final Glyph defaultGlyph;
+    private final Metadata metadata;
 
-    protected BitmapFont(Glyph defaultGlyph) {
+    protected BitmapFont(Glyph defaultGlyph, Metadata metadata) {
         this.defaultGlyph = defaultGlyph;
+        this.metadata = metadata;
     }
 
-    public BitmapFont(Glyph defaultGlyph, Int2ObjectMap<Glyph> characters) {
+    public BitmapFont(Glyph defaultGlyph, Int2ObjectMap<Glyph> characters, Metadata metadata) {
         this.defaultGlyph = defaultGlyph;
 
         for (var entry : characters.int2ObjectEntrySet()) {
             this.characters.put(entry.getIntKey(), entry.getValue());
         }
+
+        this.metadata = metadata;
+    }
+
+    public BitmapFont(Glyph defaultGlyph, Int2ObjectMap<Glyph> characters) {
+        this(defaultGlyph, characters, Metadata.empty());
     }
 
     @Override
     public int getGlyphWidth(int character, double size, int offset) {
         var glyph = this.characters.getOrDefault(character, this.defaultGlyph);
-        return MathHelper.floor((glyph.fontWidth() + offset) * (size / glyph.height() * glyph.logicalHeight() / 8));
+        if (glyph.logicalHeight() == 0 || glyph.height() == 0) {
+            return (int) (((glyph.fontWidth())) * (size / 8));
+        }
+
+        final double textureScale = glyph.height() / glyph.logicalHeight();
+        final double baseScale = size / textureScale / 8;
+
+        return (int) (((glyph.fontWidth() + offset * textureScale)) * baseScale);
     }
 
     @Override
     public int drawGlyph(DrawableCanvas canvas, int character, int x, int y, double size, int offset, CanvasColor color) {
         var glyph = this.characters.getOrDefault(character, this.defaultGlyph);
 
-        final double textureScale = glyph.height() / glyph.logicalHeight();
+        if (glyph.logicalHeight() == 0 || glyph.height() == 0) {
+            return (int) (((glyph.fontWidth())) * (size / 8));
+        }
 
+        final double textureScale = glyph.height() / glyph.logicalHeight();
         final double baseScale = size / textureScale / 8;
 
         for (int fX = 0; fX < glyph.width(); fX++) {
@@ -55,12 +73,17 @@ public final class BitmapFont implements CanvasFont {
             }
         }
 
-        return (int) (((glyph.fontWidth() + offset)) * baseScale);
+        return (int) (((glyph.fontWidth() + offset * textureScale)) * baseScale);
     }
 
     @Override
     public boolean containsGlyph(int character) {
         return this.characters.containsKey(character);
+    }
+
+    @Override
+    public Metadata getMetadata() {
+        return this.metadata;
     }
 
     public record Glyph(int width, int height, int ascend, int fontWidth, int logicalHeight, boolean[] texture) {

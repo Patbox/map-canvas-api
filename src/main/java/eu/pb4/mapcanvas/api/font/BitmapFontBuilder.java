@@ -3,12 +3,19 @@ package eu.pb4.mapcanvas.api.font;
 import eu.pb4.mapcanvas.impl.font.BitmapFont;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public final class BitmapFontBuilder {
     private final Int2ObjectMap<BitmapFont.Glyph> characters = new Int2ObjectOpenHashMap<>();
     private BitmapFont.Glyph defaultGlyph = BitmapFont.Glyph.INVALID;
+
+    private final List<String> authors = new ArrayList<>();
+    private String description = null;
+    private String name = "unnamed";
 
     private BitmapFontBuilder() {}
 
@@ -39,11 +46,26 @@ public final class BitmapFontBuilder {
         return this;
     }
 
+    public BitmapFontBuilder addAuthor(String author) {
+        this.authors.add(author);
+        return this;
+    }
+
+    public BitmapFontBuilder setDescription(@Nullable String description) {
+        this.description = description;
+        return this;
+    }
+
+    public BitmapFontBuilder setName(String name) {
+        this.name = name;
+        return this;
+    }
+
     /**
      * Builds a font
      */
     public CanvasFont build() {
-        return new BitmapFont(this.defaultGlyph, this.characters);
+        return new BitmapFont(this.defaultGlyph, this.characters, CanvasFont.Metadata.create(this.name, this.authors, this.description));
     }
 
     /**

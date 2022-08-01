@@ -32,15 +32,17 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
     }
 
     public static CanvasImage from(BufferedImage image) {
+        return from(image, ColorResolver.DEFAULT);
+    }
+    public static CanvasImage from(BufferedImage image, ColorResolver resolver) {
         var width = image.getWidth();
         var height = image.getHeight();
 
         var canvas = new CanvasImage(image.getWidth(), image.getHeight());
 
-
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                canvas.setRaw(x, y, CanvasUtils.findClosestRawColorARGB(image.getRGB(x, y)));
+                canvas.setRaw(x, y, resolver.getRawColor(image, x, y));
             }
         }
 
@@ -237,5 +239,16 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
         public DrawableCanvas getOwningCanvas() {
             return CanvasImage.this;
         }
+    }
+
+    @FunctionalInterface
+    public interface ColorResolver {
+        ColorResolver DEFAULT = (image, x, y) -> CanvasUtils.findClosestRawColorARGB(image.getRGB(x, y));
+        ColorResolver DEFAULT_BLACK_CLEAR = (image, x, y) -> {
+            var color = image.getRGB(x, y);
+            return (color & 0xFFFFFF) == 0 ? 0 : CanvasUtils.findClosestRawColorARGB(color);
+        };
+
+        byte getRawColor(BufferedImage image, int x, int y);
     }
 }

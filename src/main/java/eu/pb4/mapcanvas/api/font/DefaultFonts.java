@@ -3,6 +3,7 @@ package eu.pb4.mapcanvas.api.font;
 import eu.pb4.mapcanvas.impl.font.BitmapFont;
 import eu.pb4.mapcanvas.impl.font.RawBitmapFontSerializer;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.util.Identifier;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,6 +12,8 @@ import java.nio.file.Path;
  * Default, bundled fonts
  */
 public final class DefaultFonts {
+    public static final FontRegistry REGISTRY = new FontRegistry();
+
     private DefaultFonts() {}
     /**
      * Default, vanilla Minecraft font
@@ -33,12 +36,21 @@ public final class DefaultFonts {
      */
     public static final CanvasFont UNSANDED;
 
+
+    /**
+     * Unsanded by unascribed
+     * This version doesn't contain vanilla-filled characters
+     * https://www.curseforge.com/minecraft/texture-packs/unsanded
+     */
+    public static final CanvasFont UNSANDED_BASE;
+
     static {
         var path = FabricLoader.getInstance().getModContainer("map-canvas-api").get().getPath("fonts");
-        VANILLA = read(path.resolve("vanilla.mcaf"));
-        ALT = read(path.resolve("alt.mcaf"));
-        ILLAGER_ALT = read(path.resolve("illageralt.mcaf"));
-        UNSANDED = FontUtils.merge(read(path.resolve("unsanded.mcaf")), VANILLA);
+        VANILLA = REGISTRY.register(new Identifier("minecraft:default"), read(path.resolve("vanilla.mcaf")));
+        ALT = REGISTRY.register(new Identifier("minecraft:alt"), read(path.resolve("alt.mcaf")));
+        ILLAGER_ALT = REGISTRY.register(new Identifier("minecraft:illageralt"), read(path.resolve("illageralt.mcaf")));
+        UNSANDED_BASE = REGISTRY.register(new Identifier("unsanded:base"), read(path.resolve("unsanded.mcaf")));
+        UNSANDED = REGISTRY.register(new Identifier("unsanded:full"), FontUtils.merge(UNSANDED_BASE, VANILLA));
     }
 
     private static CanvasFont read(Path path) {

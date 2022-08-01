@@ -1,16 +1,44 @@
 package eu.pb4.mapcanvas.impl.font;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
+import eu.pb4.mapcanvas.api.font.CanvasFont;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 import javax.imageio.ImageIO;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class VanillaFontReader {
-    public static BitmapFont build(ZipFile[] files, Identifier identifier) {
-        var font = new BitmapFont(BitmapFont.Glyph.INVALID);
+
+    public static CanvasFont build(ZipFile[] zipFile, Identifier identifier) {
+        var lines = new ArrayList<String>();
+        for (var zip : zipFile) {
+            try {
+                var entry = zip.getEntry("pack.mcmeta");
+                var stream = zip.getInputStream(entry);
+                var json = JsonParser.parseString(new String(stream.readAllBytes()));
+                stream.close();
+
+                lines.add(Text.Serializer.fromJson(json.getAsJsonObject().get("pack").getAsJsonObject().get("description")).getString());
+            } catch (Exception e) {
+
+            }
+        }
+
+        return build(zipFile,
+                CanvasFont.Metadata.create("Resource Pack Font", List.of("Unknown"), "Generated from resource packs.\n" + String.join("\n", lines))
+                , identifier);
+    }
+
+
+    public static BitmapFont build(ZipFile[] files, CanvasFont.Metadata metadata, Identifier identifier) {
+        var font = new BitmapFont(BitmapFont.Glyph.INVALID, metadata);
 
         try {
             var file = new StackedZipFile(files);
@@ -61,7 +89,9 @@ public class VanillaFontReader {
                                             }
                                         }
 
-                                        font.characters.put(array[x], new BitmapFont.Glyph(charWidth, charHeight, ascent, realWidth, height, glyphTexture));
+                                        if (!font.characters.containsKey(array[x])) {
+                                            font.characters.put(array[x], new BitmapFont.Glyph(charWidth, charHeight, ascent, realWidth, height, glyphTexture));
+                                        }
                                     } catch (Exception e) {
                                         e.printStackTrace();
                                     }
@@ -71,7 +101,7 @@ public class VanillaFontReader {
                             var advances = obj.get("advances").getAsJsonObject();
 
                             for (var key : advances.keySet()) {
-                                font.characters.put(key.codePointAt(0), new BitmapFont.Glyph(0, 0,0, advances.getAsJsonPrimitive(key).getAsInt(), 0, new boolean[0]));
+                                font.characters.put(key.codePointAt(0), new BitmapFont.Glyph(0, 0, 0, advances.getAsJsonPrimitive(key).getAsInt(), 0, new boolean[0]));
                             }
                         }
                     } catch (Exception e) {
@@ -104,7 +134,8 @@ public class VanillaFontReader {
                     if (stream != null) {
                         return stream;
                     }
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                }
             }
             return null;
         }

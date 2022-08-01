@@ -1,6 +1,8 @@
 package eu.pb4.mapcanvas.testmod;
 
+import com.google.gson.JsonObject;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import eu.pb4.mapcanvas.api.core.*;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
@@ -19,6 +21,8 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.block.MapColor;
+import net.minecraft.command.argument.BlockRotationArgumentType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
@@ -29,6 +33,7 @@ import net.minecraft.util.math.Direction;
 import org.apache.commons.io.FileUtils;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -63,12 +68,13 @@ public class TestMod implements ModInitializer {
     private List<Runnable> runPreRender = new ArrayList<>();
     private Thread rendererThread;
     private volatile boolean activeRenderer = false;
+    private CanvasFont pixel;
 
 
     private int test(CommandContext<ServerCommandSource> ctx) {
         try {
             var dir = IntegerArgumentType.getInteger(ctx, "dir");
-            var rot = IntegerArgumentType.getInteger(ctx, "rot");
+            var rot = BlockRotationArgumentType.getBlockRotation(ctx, "rot");
             if (display != null) {
                 this.display.destroy();
             }
@@ -84,7 +90,8 @@ public class TestMod implements ModInitializer {
                 });
             };
 
-            this.display = VirtualDisplay.of(this.canvas, new BlockPos(ctx.getSource().getPosition()), Direction.byId(dir), rot, true, callback);
+            this.display = VirtualDisplay.builder(this.canvas, new BlockPos(ctx.getSource().getPosition()), Direction.byId(dir))
+                    .rotation(rot).invisible().glowing().callback(callback).build();
             for (var player : ctx.getSource().getServer().getPlayerManager().getPlayerList()) {
                 this.display.addPlayer(player);
             }
@@ -100,9 +107,19 @@ public class TestMod implements ModInitializer {
             dispatcher.register(
                     literal("test").then(
                             argument("dir", IntegerArgumentType.integer(0, Direction.values().length))
-                                    .then(argument("rot", IntegerArgumentType.integer(0, 4))
+                                    .then(argument("rot", BlockRotationArgumentType.blockRotation())
                                             .executes(this::test)
                                     )
+                    )
+            );
+            dispatcher.register(
+                    literal("input").then(
+                            argument("input", StringArgumentType.greedyString())
+                                    .executes((ctx) -> {
+                                        this.currentRenderer.onInput(StringArgumentType.getString(ctx, "input"));
+                                        return 0;
+                                    })
+
                     )
             );
 
@@ -158,10 +175,59 @@ public class TestMod implements ModInitializer {
         }
 
         try {
+            var json = new JsonObject();
+
+            for (var color : CanvasColor.values()) {
+                var obj = new JsonObject();
+
+                obj.addProperty("rawId", Byte.toUnsignedInt(color.getRenderColor()));
+                obj.addProperty("mapColor", color.getColor().id);
+                obj.addProperty("mapBrightness", color.getBrightness().id);
+                obj.addProperty("colorInt", color.getRgbColor());
+                obj.addProperty("clear", color.getColor() == MapColor.CLEAR);
+
+                var sb = new StringBuilder(Integer.toHexString(color.getRgbColor()));
+                while (sb.length() < 6) {
+                    sb.insert(0, '0'); // pad with leading zero if needed
+                }
+
+                obj.addProperty("color", sb.toString());
+                json.add(color.getName(), obj);
+            }
+
+            Files.writeString(FabricLoader.getInstance().getGameDir().resolve("../palette/map_colors.json"), json.toString(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+
+        try {
+            var builder = new StringBuilder();
+            builder.append("GIMP Palette\n");
+            builder.append("Name: Minecraft Map Colors\n");
+            builder.append("Columns: 16\n");
+            builder.append("#\n");
+
+
+            for (var color : CanvasColor.values()) {
+                var rgb = color.getRgbColor();
+                builder.append("" + ((rgb >> 16) & 0xFF)).append(" ");
+                builder.append("" + ((rgb >> 8) & 0xFF)).append(" ");
+                builder.append("" + ((rgb) & 0xFF)).append(" ");
+                builder.append(color.getName()).append("\n");
+            }
+
+            Files.writeString(FabricLoader.getInstance().getGameDir().resolve("../palette/map_colors_gimp.gpl"), builder.toString(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try {
             var vanillaZip = PolymerUtils.getClientJar();
 
             var compPath = FabricLoader.getInstance().getGameDir().resolve("coml.zip");
             var unsPath = FabricLoader.getInstance().getGameDir().resolve("uns.zip");
+            var pixelPath = FabricLoader.getInstance().getGameDir().resolve("pixelperf.zip");
             var vanillaJsonPath = FabricLoader.getInstance().getGameDir().resolve("../vanilla-font-json.zip");
 
             if (!Files.exists(compPath)) {
@@ -180,13 +246,28 @@ public class TestMod implements ModInitializer {
                         10000);
             }
 
+            if (!Files.exists(pixelPath)) {
+                FileUtils.copyURLToFile(
+                        new URL("https://github.com/NovaWostra/Pixel-Perfection-Chorus-Eddit/releases/download/v9.19.6.1/Pixel.Perfection.Legacy.9.19.6.1.zip"),
+                        pixelPath.toFile(),
+                        10000,
+                        10000);
+            }
+
+
             var hdPack = new ZipFile(compPath.toFile());
             var unsPack = new ZipFile(unsPath.toFile());
+            var pixelPack = new ZipFile(pixelPath.toFile());
             var jsonPack = new ZipFile(vanillaJsonPath.toFile());
 
-            this.font = FontUtils.fromVanillaFormat(new Identifier("minecraft:default"), vanillaZip);
+            this.font = FontUtils.fromVanillaFormat(new Identifier("minecraft:default"),
+                    CanvasFont.Metadata.create("Minecraft Font", List.of("Mojang Studios"), "Default Minecraft Font"),
+                    vanillaZip);
             this.fontHd = FontUtils.fromVanillaFormat(new Identifier("minecraft:default"), hdPack, vanillaZip);
-            this.fontUnsanded = FontUtils.fromVanillaFormat(new Identifier("minecraft:default"), unsPack, jsonPack);
+            this.pixel = FontUtils.fromVanillaFormat(new Identifier("minecraft:default"), CanvasFont.Metadata.create("Pixel Perfection", List.of("XSSheep"), "Font from Pixel Perfection Resource Pack"), pixelPack, jsonPack);
+            this.fontUnsanded = FontUtils.fromVanillaFormat(new Identifier("minecraft:default"),
+                    CanvasFont.Metadata.create("Unsanded", List.of("unascribed"), "An 8px font with wide vertical strokes inspired by Chicago and Craft Sans."),
+                    unsPack, jsonPack);
 
             var path = FabricLoader.getInstance().getGameDir().resolve("fonts_export");
             Files.createDirectories(path);
@@ -206,15 +287,33 @@ public class TestMod implements ModInitializer {
             }
 
             {
+                var stream = new FileOutputStream(path.resolve("pixel_perfection.mcaf").toFile());
+
+                RawBitmapFontSerializer.write((BitmapFont) this.pixel, stream);
+                stream.close();
+            }
+
+            {
                 var stream = new FileOutputStream(path.resolve("alt.mcaf").toFile());
 
-                RawBitmapFontSerializer.write((BitmapFont) FontUtils.fromVanillaFormat(new Identifier("minecraft:alt"), vanillaZip), stream);
+                RawBitmapFontSerializer.write((BitmapFont) FontUtils.fromVanillaFormat(new Identifier("minecraft:alt"),
+                        CanvasFont.Metadata.create("Minecraft Alt", List.of("Mojang Studios"), "Standard Galactic Alphabet font"),
+                        vanillaZip), stream);
                 stream.close();
             }
 
             {
                 var stream = new FileOutputStream(path.resolve("illageralt.mcaf").toFile());
-                RawBitmapFontSerializer.write((BitmapFont) FontUtils.fromVanillaFormat(new Identifier("minecraft:illageralt"), vanillaZip), stream);
+                RawBitmapFontSerializer.write((BitmapFont) FontUtils.fromVanillaFormat(new Identifier("minecraft:illageralt"),
+                        CanvasFont.Metadata.create("Illager Runes", List.of("Mojang Studios"), "Illager Runes from Minecraft Dungeons"),
+                        vanillaZip), stream);
+                stream.close();
+            }
+
+            {
+                var stream = new FileOutputStream(path.resolve("faithful.mcaf").toFile());
+
+                RawBitmapFontSerializer.write((BitmapFont) fontHd, stream);
                 stream.close();
             }
 
@@ -232,12 +331,21 @@ public class TestMod implements ModInitializer {
             e.printStackTrace();
         }
 
+        FontTestRenderer.FONTS.add(this.fontHd);
+        FontTestRenderer.FONTS.add(this.pixel);
+        FontTestRenderer.FONTS.add(FontUtils.fromAwtFont(new Font("Comic Sans MS", Font.PLAIN, 64)));
 
         ServerLifecycleEvents.SERVER_STARTED.register((s) -> {
             this.setCurrentRenderer(this.menuRenderer);
             this.renderers.add(new Pair<>("TaterDemo", new TaterDemoRenderer(this.tater, this.fontHd, this.logo)));
             this.renderers.add(new Pair<>("SimpleSurface", new SurfaceRenderer()));
             this.renderers.add(new Pair<>("Raycast", new RaycastRenderer(s)));
+            this.renderers.add(new Pair<>("FontTest", new FontTestRenderer()));
+            try {
+                this.renderers.add(new Pair<>("Browser Test", new BrowserTestRenderer()));
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
 
             if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
                 this.renderers.add(new Pair<>("Client Framebuffer", new ClientRenderer()));
@@ -318,10 +426,23 @@ public class TestMod implements ModInitializer {
 
 
     protected void setCurrentRenderer(ActiveRenderer renderer) {
-        this.currentRenderer = null;
-        CanvasUtils.clear(this.canvas);
-        this.canvas.clearIcons();
-        renderer.setup(this.canvas);
-        this.currentRenderer = renderer;
+        try {
+            if (this.currentRenderer != null) {
+                this.currentRenderer.setStatus(false);
+            }
+
+            this.currentRenderer = null;
+            CanvasUtils.clear(this.canvas);
+            this.canvas.clearIcons();
+            renderer.setup(this.canvas);
+            this.currentRenderer = renderer;
+            this.currentRenderer.setStatus(true);
+        } catch (Throwable e) {
+            this.setCurrentRenderer(this.menuRenderer);
+        }
+    }
+
+    {
+        System.out.println(java.awt.GraphicsEnvironment.isHeadless());
     }
 }

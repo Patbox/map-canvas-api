@@ -3,8 +3,11 @@ package eu.pb4.mapcanvas.testmod.advancedgui;
 import eu.pb4.mapcanvas.api.core.*;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.api.font.DefaultFonts;
+import eu.pb4.mapcanvas.api.font.FontUtils;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.utils.ViewUtils;
+import eu.pb4.mapcanvas.impl.font.AwtFont;
+import eu.pb4.mapcanvas.impl.view.Rotate90ClockwiseView;
 import net.minecraft.block.MapColor;
 import net.minecraft.item.DyeItem;
 import net.minecraft.item.Items;
@@ -14,6 +17,8 @@ import net.minecraft.text.Text;
 import net.minecraft.util.ClickType;
 import net.minecraft.util.math.MathHelper;
 
+import javax.swing.text.View;
+import java.awt.*;
 import java.util.ArrayList;
 
 public class TaterDemoRenderer implements ActiveRenderer {
@@ -66,12 +71,14 @@ public class TaterDemoRenderer implements ActiveRenderer {
 
         if (this.tater != null) {
             var sin = Math.sin((double) time / 300);
+            var sin2 = Math.sin((double) time / 300 + 4354534);
             var cos = Math.sin((double) time / 500 + 100000);
+            var cos2 = Math.sin((double) time / 500 + 10545);
 
-            var rotater = ViewUtils.rotate(this.tater, (float) MathHelper.wrapDegrees((double) time / 2000));
+            var rotater = ViewUtils.rotate(this.tater, (float) (time / 2000d % 360));
 
-            CanvasUtils.draw(canvas, canvas.getWidth() / 2 - rotater.getWidth() / 2, canvas.getHeight() / 2 - rotater.getHeight() / 2, rotater);
-            CanvasUtils.draw(canvas, (int) (outputCanvas.getWidth() / 2 + this.tater.getWidth() * cos), (int) (this.tater.getHeight() / 2 + 50 * sin), 64, 64, this.tater);
+            CanvasUtils.draw(canvas, (int) Math.round(canvas.getWidth() / 2d - rotater.getWidth() / 2d), (int) Math.round(canvas.getHeight() / 2d - rotater.getHeight() / 2d), rotater);
+            CanvasUtils.draw(canvas, (int) (outputCanvas.getWidth() / 2 + this.tater.getWidth() * cos), (int) (this.tater.getHeight() / 2 + 50 * sin), (int) ((cos2 + 1) * 32), (int) ((sin2 + 1) * 32), this.tater);
         }
 
         this.fpsIcon.move((this.fpsIcon.getX() + 2) % (canvas.getWidth() * 2), (this.fpsIcon.getY() + 2) % (canvas.getHeight() * 2), (byte) 0);
@@ -82,15 +89,25 @@ public class TaterDemoRenderer implements ActiveRenderer {
         DefaultFonts.VANILLA.drawText(canvas, "\uD83D\uDDE1\uD83C\uDFF9\uD83E\uDE93\uD83D\uDD31\uD83C\uDFA3\uD83E\uDDEA⚗ 大\t", 256, 32, 8, CanvasColor.RED_HIGH);
         DefaultFonts.VANILLA.drawText(ViewUtils.flipX(canvas), "Hello World! 1234 \n[ą]ęść AĄĘŚĆ \u00a1", 64, 64, 16, CanvasColor.RED_HIGH);
 
+        DefaultFonts.VANILLA.drawText(ViewUtils.skewY(ViewUtils.shift(canvas, 0, 64 + 32 + 4), Math.sin(time  / 2000d) * 0.3), "Hello World!", 64, 0, 32, CanvasColor.RED_HIGH);
+
+
+
+
         this.fontHd.drawText(canvas, "Hello World! 1234 \n[ą]ęść AĄĘŚĆ \u00a1", 64, 128, 8, CanvasColor.ORANGE_HIGH);
 
         this.fontHd.drawText(canvas, "Hello World! 1234 \n[ą]ęść AĄĘŚĆ \u00a1", 64, 128 + 64, 16, CanvasColor.ORANGE_HIGH);
-        DefaultFonts.UNSANDED.drawText(canvas, "Tater best [:)  ]", 64, 128 * 2 + 32, 24, CanvasColor.BLACK_NORMAL);
-        DefaultFonts.UNSANDED.drawText(canvas, "T\u200cater best [:)  ]", 64, 128 * 2 + 32 + 25, 24, CanvasColor.BLACK_NORMAL);
+        DefaultFonts.UNSANDED.drawText(canvas, "Tater best [:)  ]", 64, 128 * 2 + 32, 24, CanvasColor.BLUE_HIGH);
+        DefaultFonts.UNSANDED.drawText(canvas, "T\u200cater best [:)  ]", 64, 128 * 2 + 32 + 25, 24, CanvasColor.BLUE_HIGH);
+
+        FontUtils.fromAwtFont(new Font("Comic Sans MS", Font.PLAIN, 64)).drawText(canvas, "Font test", 64, 128 * 2 + 32 + 25 + 32, 64, CanvasColor.YELLOW_HIGH);
 
         if (this.logo != null) {
             CanvasUtils.draw(canvas, canvas.getWidth() - 64, canvas.getHeight() - 64, 64, 64, this.logo);
+            CanvasUtils.draw(canvas, canvas.getWidth() - 64, canvas.getHeight() - 128, 64, 64, ViewUtils.rotate90Clockwise(this.logo));
         }
+
+        //DefaultFonts.VANILLA.drawText(ViewUtils.rotate(canvas, MathHelper.PI), "Test", , CanvasColor.RED_HIGH);
     }
 
     @Override
@@ -107,6 +124,8 @@ public class TaterDemoRenderer implements ActiveRenderer {
             } else if (stack.getItem() == Items.SPONGE) {
                 CanvasUtils.fill(this.drawableSurface, x - count + 1, y - count + 1, x + count, y + count, CanvasColor.CLEAR);
             }
+        } else {
+            CanvasUtils.fill(this.drawableSurface, x - 5, y - 5, x + 5, y + 5, CanvasColor.CLEAR);
         }
     }
 }

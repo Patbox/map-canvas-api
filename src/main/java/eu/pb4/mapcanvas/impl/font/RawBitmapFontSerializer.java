@@ -1,22 +1,69 @@
 package eu.pb4.mapcanvas.impl.font;
 
+import com.google.common.primitives.Ints;
 import com.google.common.primitives.Shorts;
+import eu.pb4.mapcanvas.api.font.CanvasFont;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.zip.*;
 
 public class RawBitmapFontSerializer {
     private static final short MAGIC = 0x7CAF;
 
-    private static final byte VERSION = 0;
+    private static final byte VERSION = 1;
 
     public static boolean write(BitmapFont font, OutputStream stream) {
+        return write(font, stream, true);
+    }
+
+    public static boolean write(BitmapFont font, OutputStream stream, boolean compress) {
         try {
             stream.write(Shorts.toByteArray(MAGIC));
-            stream.write(VERSION);
+            stream.write(1);
+
+            if (compress) {
+                stream.write(1);
+                var cStream = new GZIPOutputStream(stream) {
+                    public void setLevel( int level ) {
+                        def.setLevel(level);
+                    }
+                };
+
+                cStream.setLevel(Deflater.BEST_COMPRESSION);
+                stream = cStream;
+            } else {
+                stream.write(0);
+            }
+
+            {
+                var bytes = font.getMetadata().name().getBytes(StandardCharsets.UTF_8);
+                writeVarInt(bytes.length, stream);
+                stream.write(bytes);
+            }
+
+            writeVarInt(font.getMetadata().authors().size(), stream);
+
+            for (var author : font.getMetadata().authors()) {
+                var bytes = author.getBytes(StandardCharsets.UTF_8);
+
+                writeVarInt(bytes.length, stream);
+                stream.write(bytes);
+            }
+
+            if (font.getMetadata().description().isPresent()) {
+                var bytes = font.getMetadata().description().get().getBytes(StandardCharsets.UTF_8);
+                writeVarInt(bytes.length, stream);
+                stream.write(bytes);
+            } else {
+                writeVarInt(0, stream);
+            }
+
 
             writeVarInt(font.characters.size(), stream);
 
@@ -26,6 +73,11 @@ public class RawBitmapFontSerializer {
             }
 
             writeGlyph(font.defaultGlyph, stream);
+
+            if (stream instanceof GZIPOutputStream gzipOutputStream) {
+                gzipOutputStream.finish();
+            }
+
             return true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -35,7 +87,38 @@ public class RawBitmapFontSerializer {
 
     public static BitmapFont read(InputStream stream) {
         try {
-            if (Shorts.fromByteArray(stream.readNBytes(2)) == MAGIC && stream.read() == VERSION) {
+            if (Shorts.fromByteArray(stream.readNBytes(2)) == MAGIC) {
+                var version = stream.read();
+
+                CanvasFont.Metadata metadata;
+                if (version == 0) {
+                    metadata = CanvasFont.Metadata.empty();
+                } else if (version == 1) {
+                    if (stream.read() == 1) {
+                        stream = new GZIPInputStream(stream);
+                    }
+
+                    String name = new String(stream.readNBytes(readVarInt(stream)), StandardCharsets.UTF_8);
+
+                    var size = readVarInt(stream);
+                    var authors = new ArrayList<String>(size);
+
+                    for (int i = 0; i < size; i++) {
+                        authors.add(new String(stream.readNBytes(readVarInt(stream)), StandardCharsets.UTF_8));
+                    }
+
+                    var descSize = readVarInt(stream);
+                    String description;
+                    if (descSize > 0) {
+                        description = new String(stream.readNBytes(descSize), StandardCharsets.UTF_8);
+                    } else {
+                        description = null;
+                    }
+
+                    metadata = CanvasFont.Metadata.create(name, authors, description);
+                } else {
+                    throw new RuntimeException("Unsupported font version");
+                }
 
                 var map = new Int2ObjectOpenHashMap<BitmapFont.Glyph>();
 
@@ -45,7 +128,9 @@ public class RawBitmapFontSerializer {
                     map.put(readVarInt(stream), readGlyph(stream));
                 }
 
-                return new BitmapFont(readGlyph(stream), map);
+                var defaultGlyph = readGlyph(stream);
+
+                return new BitmapFont(defaultGlyph, map, metadata);
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -1,6 +1,5 @@
 package eu.pb4.mapcanvas.impl.view;
 
-import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import net.minecraft.util.math.MathHelper;
 
@@ -15,7 +14,7 @@ public class RotatedView implements DrawableCanvas {
     private final int halfWidth;
     private final int halfHeight;
 
-    public RotatedView(DrawableCanvas source, float angle) {
+    public RotatedView(DrawableCanvas source, double angle, int offsetX, int offsetY) {
         this.source = source;
 
         this.cos = Math.cos(angle);
@@ -51,8 +50,8 @@ public class RotatedView implements DrawableCanvas {
         this.width = Math.max(maxWidth - minWidth, maxHeight - minHeight);
         this.height = this.width;
 
-        this.offsetX = -source.getWidth() / 2;
-        this.offsetY = -source.getHeight() / 2;
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
         this.halfWidth = this.width / 2;
         this.halfHeight = this.height / 2;
 
@@ -64,18 +63,18 @@ public class RotatedView implements DrawableCanvas {
         y -= this.halfHeight;
 
         return this.source.getRaw(
-                (int) Math.floor(this.cos * x + this.sin * y - this.offsetX),
-                (int) Math.floor(-this.sin * x + this.cos * y - this.offsetY)
+                (int) Math.floor(this.cos * x + this.sin * y + this.offsetX),
+                (int) Math.floor(-this.sin * x + this.cos * y + this.offsetY)
         );
     }
 
     @Override
     public void setRaw(int x, int y, byte color) {
-        x -= this.width / 2;
-        y -= this.height / 2;
+        x -= this.halfWidth;
+        y -= this.halfHeight;
 
         this.source.setRaw(
-                (int) Math.floor(this.cos * x + this.sin * y - this.offsetX),
+                (int) Math.floor(this.cos * x + this.sin * y + this.offsetX),
                 (int) Math.floor(-this.sin * x + this.cos * y - this.offsetY),
                 color
         );

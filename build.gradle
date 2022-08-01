@@ -60,9 +60,17 @@ dependencies {
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
 	// You may need to force-disable transitiveness on them.
-	modCompileOnly modLocalRuntime("eu.pb4:polymer:0.2.0-rc.4+1.19-rc2")
+	modCompileOnly modLocalRuntime("eu.pb4:polymer:0.2.10+1.19.1")
+	modCompileOnly modLocalRuntime("eu.pb4:placeholder-api:2.0.0-beta.7+1.19")
 
 	modCompileOnly modLocalRuntime("org.openjdk.jol:jol-core:0.10")
+
+
+	modCompileOnly modLocalRuntime('org.seleniumhq.selenium:selenium-java:4.3.0') {
+		exclude group: 'io.netty', module: 'netty-transport-native-epoll'
+		exclude group: 'io.netty', module: 'netty-transport-native-kqueue'
+	}
+
 
 	testmodImplementation sourceSets.main.output
 }
@@ -136,4 +144,30 @@ publishing {
 			}
 		}
 	}
+}
+
+task testmodJar(type: Jar) {
+	from sourceSets.testmod.output
+	destinationDirectory = new File(project.buildDir, "devlibs")
+	archiveClassifier = "testmod"
+}
+
+task remapTestmodJar(type: net.fabricmc.loom.task.RemapJarTask, dependsOn: testmodJar) {
+	input = testmodJar.archiveFile
+	archiveClassifier = "testmod"
+	addNestedDependencies = false
+}
+build.dependsOn remapTestmodJar
+
+remapTestmodJar {
+	def testModJarTasks = []
+
+	subprojects {
+		if (it.name == "deprecated" || !it.file("src/testmod").exists()) return
+
+		testModJarTasks += it.tasks.remapTestmodJar
+	}
+
+	nestedJars.setFrom(testModJarTasks)
+	addNestedDependencies = true
 }

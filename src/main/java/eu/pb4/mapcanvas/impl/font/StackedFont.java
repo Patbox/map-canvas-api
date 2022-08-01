@@ -4,7 +4,27 @@ import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 
-public record StackedFont(CanvasFont[] fonts) implements CanvasFont {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+
+public record StackedFont(CanvasFont[] fonts, Metadata metadata) implements CanvasFont {
+
+    public StackedFont(CanvasFont[] fonts) {
+        this(fonts, Metadata.create(fonts[0].getMetadata().name(), ((Supplier<List<String>>) () -> {
+            var list = new ArrayList<String>();
+            for (var font : fonts) {
+                if (font == fonts[0]) {
+                    list.addAll(font.getMetadata().authors());
+                } else {
+                    for (var author : font.getMetadata().authors()) {
+                        list.add(author + " (" + font.getMetadata().name() + ")");
+                    }
+                }
+            }
+            return list;
+        }).get(), fonts[0].getMetadata().description().orElse(null)));
+    }
 
     @Override
     public int getGlyphWidth(int character, double size, int offset) {
@@ -37,5 +57,10 @@ public record StackedFont(CanvasFont[] fonts) implements CanvasFont {
         }
 
         return false;
+    }
+
+    @Override
+    public Metadata getMetadata() {
+        return this.metadata;
     }
 }

@@ -9,4 +9,7 @@ public interface ActiveRenderer {
     void setup(PlayerCanvas canvas);
     void render(PlayerCanvas outputCanvas, DrawableCanvas canvas, long time, int displayFps, int frame);
     void onClick(ServerPlayerEntity player, ClickType type, int x, int y);
+
+    default void onInput(String input) {};
+    default void setStatus(boolean active) {};
 }

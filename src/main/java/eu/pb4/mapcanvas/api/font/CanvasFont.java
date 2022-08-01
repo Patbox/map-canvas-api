@@ -2,10 +2,17 @@ package eu.pb4.mapcanvas.api.font;
 
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
+import eu.pb4.mapcanvas.api.utils.CanvasUtils;
+import eu.pb4.mapcanvas.api.utils.ViewUtils;
 import eu.pb4.mapcanvas.impl.font.StackedFont;
 import eu.pb4.mapcanvas.impl.font.VanillaFontReader;
+import net.minecraft.text.CharacterVisitor;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.zip.ZipFile;
 
 /**
@@ -83,4 +90,25 @@ public interface CanvasFont {
      * @return true if it's present
      */
     boolean containsGlyph(int character);
+
+    default Metadata getMetadata() {
+        return Metadata.empty();
+    }
+
+
+    record Metadata(String name, List<String> authors, Optional<String> description) {
+        private static Metadata EMPTY = new Metadata("unnamed", List.of(), Optional.empty());
+
+        public String defaultedDescription() {
+            return this.description.orElse("A Map Canvas Font");
+        }
+
+        public static Metadata create(String name, List<String> authors, String description) {
+            return new Metadata(name, List.copyOf(authors), Optional.ofNullable(description));
+        }
+
+        public static Metadata empty() {
+            return EMPTY;
+        }
+    }
 }
