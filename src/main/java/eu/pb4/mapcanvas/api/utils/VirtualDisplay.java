@@ -175,8 +175,8 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
 
     public static final class Builder {
         private PlayerCanvas canvas;
-        private BlockPos pos;
-        private Direction direction;
+        private BlockPos pos = new BlockPos(0,0,0);
+        private Direction direction = Direction.NORTH;
         private boolean glowing;
         private boolean invisible;
         private int rotation = 0;
