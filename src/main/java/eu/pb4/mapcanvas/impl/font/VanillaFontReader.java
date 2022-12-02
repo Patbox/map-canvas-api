@@ -90,7 +90,15 @@ public class VanillaFontReader {
                                         }
 
                                         if (!font.characters.containsKey(array[x])) {
-                                            font.characters.put(array[x], new BitmapFont.Glyph(charWidth, charHeight, ascent, realWidth, height, glyphTexture));
+                                            var trueWidth = realWidth + 1;
+                                            var textureCompact = new boolean[charHeight * trueWidth];
+
+                                            for (int xd = 0; xd < trueWidth; xd++) {
+                                                for (int yd = 0; yd < charHeight; yd++) {
+                                                    textureCompact[xd + yd * trueWidth] = glyphTexture[xd + yd * charWidth];
+                                                }
+                                            }
+                                            font.characters.put(array[x], new BitmapFont.Glyph(trueWidth, charHeight, ascent, realWidth, height, textureCompact));
                                         }
                                     } catch (Exception e) {
                                         e.printStackTrace();

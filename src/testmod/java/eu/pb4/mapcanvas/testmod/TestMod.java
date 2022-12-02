@@ -13,7 +13,6 @@ import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import eu.pb4.mapcanvas.impl.font.BitmapFont;
 import eu.pb4.mapcanvas.impl.font.RawBitmapFontSerializer;
 import eu.pb4.mapcanvas.testmod.advancedgui.*;
-import eu.pb4.polymer.api.utils.PolymerUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -223,7 +222,7 @@ public class TestMod implements ModInitializer {
         }
 
         try {
-            var vanillaZip = PolymerUtils.getClientJar();
+            var vanillaZip = new ZipFile(FabricLoader.getInstance().getGameDir().resolve("polymer_cache/client_jars/7e46fb47609401970e2818989fa584fd467cd036.jar").toFile());//PolymerUtils.getClientJar();
 
             var compPath = FabricLoader.getInstance().getGameDir().resolve("coml.zip");
             var unsPath = FabricLoader.getInstance().getGameDir().resolve("uns.zip");

@@ -3,17 +3,20 @@ package eu.pb4.mapcanvas.testmod.advancedgui;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.api.core.PlayerCanvas;
+import eu.pb4.mapcanvas.api.font.DefaultFonts;
+import eu.pb4.mapcanvas.api.utils.ViewUtils;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.ClickType;
 import net.minecraft.util.math.noise.DoublePerlinNoiseSampler;
+import net.minecraft.util.math.noise.SimplexNoiseSampler;
 import net.minecraft.util.math.random.Xoroshiro128PlusPlusRandom;
 
 
 public class SurfaceRenderer implements ActiveRenderer {
-    private final DoublePerlinNoiseSampler noise;
+    private final SimplexNoiseSampler noise;
 
     public SurfaceRenderer() {
-        this.noise = DoublePerlinNoiseSampler.create(new Xoroshiro128PlusPlusRandom(1), 1, 1.4, 1.0, -0.5, -0.1);
+        this.noise = new SimplexNoiseSampler(new Xoroshiro128PlusPlusRandom(1));
     }
     
     @Override
@@ -21,26 +24,41 @@ public class SurfaceRenderer implements ActiveRenderer {
 
     @Override
     public void render(PlayerCanvas outputCanvas, DrawableCanvas canvas, long time, int displayFps, int frame) {
-        var sin = Math.sin(time / 1000d);
-        var cos = Math.cos(time / 1000d);
-        for (int x = 0; x < canvas.getWidth(); x++) {
-            for (int y = 0; y < canvas.getWidth(); y++) {
-                canvas.set(x, y, switch (Math.max(Math.min((int) ((this.noise.sample((x / 80d + sin), y / 80d + (time / 2000d) % 3600, 0)) * 6), 6), -3)) {
-                    case 6 -> CanvasColor.WHITE_NORMAL;
-                    case 5 -> CanvasColor.GRAY_HIGH;
-                    case 4 -> CanvasColor.LIME_LOW;
-                    case 3 -> CanvasColor.LIME_NORMAL;
-                    case 2 -> CanvasColor.LIME_HIGH;
-                    case 1 -> CanvasColor.PALE_YELLOW_HIGH;
-                    case 0 -> CanvasColor.BLUE_HIGH;
-                    case -1 -> CanvasColor.BLUE_NORMAL;
-                    case -2 -> CanvasColor.BLUE_LOW;
-                    case -3 -> CanvasColor.BLUE_LOWEST;
+        final var sin = Math.sin(time / 1000d) * 2;
+        final var colorSize = (61 * 4 - 4);
+        final var width = canvas.getWidth() / 2;
+        final var height = canvas.getHeight() / 2;
 
-                    default -> CanvasColor.BLACK_NORMAL;
-                });
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                var color = CanvasColor.values()[(int) ((
+                                        (
+                                                (this.noise.sample((x / 80d + sin) + Math.sin(y / 40d), y / 80d + (time / 1000d) % 3600 + Math.sin(x / 40d), (time / 600d) % 3600)
+                                        ) * 8 + time / 400) % colorSize) + 4)];
+
+
+                canvas.set(x * 2, y * 2, color);
+                canvas.set(x * 2, y * 2 + 1, color);
+                canvas.set(x * 2 + 1, y * 2 + 1, color);
+                canvas.set(x * 2 + 1, y * 2, color);
             }
         }
+
+        var text = """
+                Is this a boss battle?
+                Idk
+                """;
+
+
+        var textView = ViewUtils.transform(canvas, new ViewUtils.Transformer() {
+            @Override
+            public Point transform(int x, int y) {
+                return new ViewUtils.Transformer.Point((int) Math.round(x + Math.sin(y / 10d + time / 500d) * 2), (int) Math.round(y + Math.sin(x / 10d + time / 500d) * 2));
+            }
+        });
+
+        DefaultFonts.UNSANDED.drawText(textView, text, 17, 17, 16, CanvasColor.GRAY_HIGH);
+        DefaultFonts.UNSANDED.drawText(textView, text, 16, 16, 16, CanvasColor.WHITE_HIGH);
     }
 
     @Override

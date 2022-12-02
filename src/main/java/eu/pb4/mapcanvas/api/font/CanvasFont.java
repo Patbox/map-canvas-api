@@ -53,9 +53,15 @@ public interface CanvasFont {
      */
     default void drawText(DrawableCanvas canvas, String text, int x, int y, double size, CanvasColor color) {
         int posX = 0;
+        int posY = 0;
 
         for (var character : text.codePoints().toArray()) {
-            posX += this.drawGlyph(canvas, character, x + posX, y, size, 2, color);
+            if (character == '\n') {
+                posY += size + 2;
+                posX = 0;
+            } else {
+                posX += this.drawGlyph(canvas, character, x + posX, y + posY, size, 2, color);
+            }
         }
     }
 

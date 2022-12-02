@@ -5,7 +5,10 @@ import eu.pb4.mapcanvas.api.core.PlayerCanvas;
 import eu.pb4.mapcanvas.impl.MapCanvasImpl;
 import eu.pb4.mapcanvas.impl.MapIdManager;
 import eu.pb4.mapcanvas.impl.PlayerInterface;
-import eu.pb4.mapcanvas.mixin.*;
+import eu.pb4.mapcanvas.mixin.EntityAccessor;
+import eu.pb4.mapcanvas.mixin.ItemFrameEntityAccessor;
+import eu.pb4.mapcanvas.mixin.PlayerInteractEntityC2SPacketAccessor;
+import eu.pb4.mapcanvas.mixin.SlimeEntityAccessor;
 import io.netty.util.internal.shaded.org.jctools.util.UnsafeAccess;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -44,7 +47,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
     private final Set<ServerPlayerEntity> players = new HashSet<>();
     private final boolean invisible;
     private final ClickDetection clickDetection;
-    private IntList clickableIds = new IntArrayList();
+    private final IntList clickableIds = new IntArrayList();
     private Box box;
     private BlockPos.Mutable min;
     private BlockPos.Mutable max;
@@ -85,7 +88,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
             double yMult = 1;
             double zMult = 1;
 
-            switch(this.direction.getAxis()) {
+            switch (this.direction.getAxis()) {
                 case X:
                     xMult = -0.8;
                     break;
@@ -97,9 +100,8 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
             }
 
 
-
             this.box = new Box(
-                    this.min.getX() + xDelta + xMult - 1, this.min.getY() + yDelta + yMult - 1, this.min.getZ() + zDelta  + zMult - 1,
+                    this.min.getX() + xDelta + xMult - 1, this.min.getY() + yDelta + yMult - 1, this.min.getZ() + zDelta + zMult - 1,
                     this.max.getX() + xMult - xDelta, this.max.getY() + yMult - yDelta, this.max.getZ() + zMult - zDelta);
         }
         return this.box;
@@ -151,7 +153,6 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         }
 
 
-
         for (var detector : holder.clickDetectors) {
             this.ids.add(detector.entityId);
             this.clickableIds.add(detector.entityId);
@@ -183,7 +184,8 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         private ClickDetection clickDetection = ClickDetection.NONE;
         private TypedInteractionCallback callback;
 
-        protected Builder() {}
+        protected Builder() {
+        }
 
         public Builder canvas(PlayerCanvas canvas) {
             this.canvas = canvas;
@@ -402,10 +404,12 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         }
     }
 
-    protected record SlimeClickDetector(int entityId, String name, Vec3d pos, Box collisionBox, int deltaX, int deltaY, Packet<?> spawnPacket, Packet<?> trackerPacket) {
-    };
+    protected record SlimeClickDetector(int entityId, String name, Vec3d pos, Box collisionBox, int deltaX, int deltaY,
+                                        Packet<?> spawnPacket, Packet<?> trackerPacket) {
+    }
 
-    protected record Holder(int entityId, int xOffset, int yOffset, BlockPos pos, UUID uuid, Packet<?> spawnPacket, Packet<?> trackerPacket, SlimeClickDetector[] clickDetectors) {
+    protected record Holder(int entityId, int xOffset, int yOffset, BlockPos pos, UUID uuid, Packet<?> spawnPacket,
+                            Packet<?> trackerPacket, SlimeClickDetector[] clickDetectors) {
 
         public static Holder of(PlayerCanvas canvas, int xOffset, int yOffset, BlockPos pos, Direction direction, int rotation, boolean glowing, boolean visible, ClickDetection detection) {
             final int finalXOffset = xOffset;
@@ -448,15 +452,11 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
                     direction.getId(), Vec3d.ZERO, 0);
 
 
-            var trackerPacket = createClass(EntityTrackerUpdateS2CPacket.class);
-            ((EntityTrackerUpdateS2CPacketAccessor) trackerPacket).setId(entityId);
-            ((EntityTrackerUpdateS2CPacketAccessor) trackerPacket).setTrackedValues(
-                    List.of(
-                            new DataTracker.Entry<>(ItemFrameEntityAccessor.getItemStack(), canvas.asStack()),
-                            new DataTracker.Entry<>(ItemFrameEntityAccessor.getRotation(), rotation),
-                            new DataTracker.Entry<>(EntityAccessor.getFlags(), (byte) ((visible ? 1 : 0) << 5))
-                    )
-            );
+            var trackerPacket = new EntityTrackerUpdateS2CPacket(entityId, List.of(
+                    DataTracker.SerializedEntry.of(ItemFrameEntityAccessor.getItemStack(), canvas.asStack()),
+                    DataTracker.SerializedEntry.of(ItemFrameEntityAccessor.getRotation(), rotation),
+                    DataTracker.SerializedEntry.of(EntityAccessor.getFlags(), (byte) ((visible ? 1 : 0) << 5))
+            ));
 
             SlimeClickDetector[] clickDetectors;
 
@@ -508,17 +508,14 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
                             centerPos.z + z + -direction.getOffsetZ() * 0.68 + zOff,
                             0f, 0f,
                             EntityType.SLIME,
-                            0, Vec3d.ZERO,0);
+                            0, Vec3d.ZERO, 0);
 
-                    var trackerPacket2 = createClass(EntityTrackerUpdateS2CPacket.class);
-                    ((EntityTrackerUpdateS2CPacketAccessor) trackerPacket2).setId(entityId2);
-                    ((EntityTrackerUpdateS2CPacketAccessor) trackerPacket2).setTrackedValues(
-                            List.of(
-                                    new DataTracker.Entry<>(EntityAccessor.getNoGravity(), true),
-                                    new DataTracker.Entry<>(SlimeEntityAccessor.getSlimeSize(), 1),
-                                    new DataTracker.Entry<>(EntityAccessor.getFlags(), (byte) (1 << 5))
-                            )
-                    );
+                    var trackerPacket2 = new EntityTrackerUpdateS2CPacket(entityId2, List.of(
+                            DataTracker.SerializedEntry.of(EntityAccessor.getNoGravity(), true),
+                            DataTracker.SerializedEntry.of(SlimeEntityAccessor.getSlimeSize(), 1),
+                            DataTracker.SerializedEntry.of(EntityAccessor.getFlags(), (byte) (1 << 5))
+
+                    ));
 
                     clickDetectors[i] = new SlimeClickDetector(entityId2, uuid2.toString(),
                             new Vec3d(entitySpawn2.getX(), entitySpawn2.getY(), entitySpawn2.getZ()),
@@ -545,22 +542,23 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
     protected enum ClickDetection {
         NONE,
         ENTITY,
-        RAYCAST;
+        RAYCAST
     }
 
     @ApiStatus.Internal
     public final void handleInteractionPacket(PlayerInteractEntityC2SPacket packet, ServerPlayerEntity player) {
         var id = ((PlayerInteractEntityC2SPacketAccessor) packet).getEntityId();
-        
+
         packet.handle(new PlayerInteractEntityC2SPacket.Handler() {
             @Override
-            public void interact(Hand hand) {}
-    
+            public void interact(Hand hand) {
+            }
+
             @Override
             public void interactAt(Hand hand, Vec3d pos) {
                 VirtualDisplay.this.interactAt(player, id, pos, hand, false);
             }
-    
+
             @Override
             public void attack() {
                 VirtualDisplay.this.interactAt(player, id, null, Hand.MAIN_HAND, true);

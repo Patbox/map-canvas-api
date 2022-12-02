@@ -53,6 +53,8 @@ public class TaterDemoRenderer implements ActiveRenderer {
 
     @Override
     public void render(PlayerCanvas outputCanvas, DrawableCanvas canvas, long time, int displayFps, int frame) {
+        var timeX = System.nanoTime();
+
         CanvasUtils.clear(canvas, CanvasColor.BLACK_LOWEST);
 
         CanvasUtils.fill(canvas, 32, 32, outputCanvas.getWidth() - 32, outputCanvas.getHeight() - 32, CanvasColor.CLEAR_FORCE);
@@ -87,6 +89,7 @@ public class TaterDemoRenderer implements ActiveRenderer {
         DefaultFonts.VANILLA.drawText(canvas, "Hello World! 1234 \n[ą]ęść AĄĘŚĆ \u00a1", 65, 33, 8, CanvasColor.BLACK_NORMAL);
         DefaultFonts.VANILLA.drawText(canvas, "Hello World! 1234 \n[ą]ęść AĄĘŚĆ \u00a1", 64, 32, 8, CanvasColor.RED_HIGH);
         DefaultFonts.VANILLA.drawText(canvas, "\uD83D\uDDE1\uD83C\uDFF9\uD83E\uDE93\uD83D\uDD31\uD83C\uDFA3\uD83E\uDDEA⚗ 大\t", 256, 32, 8, CanvasColor.RED_HIGH);
+
         DefaultFonts.VANILLA.drawText(ViewUtils.flipX(canvas), "Hello World! 1234 \n[ą]ęść AĄĘŚĆ \u00a1", 64, 64, 16, CanvasColor.RED_HIGH);
 
         DefaultFonts.VANILLA.drawText(ViewUtils.skewY(ViewUtils.shift(canvas, 0, 64 + 32 + 4), Math.sin(time  / 2000d) * 0.3), "Hello World!", 64, 0, 32, CanvasColor.RED_HIGH);
@@ -100,7 +103,7 @@ public class TaterDemoRenderer implements ActiveRenderer {
         DefaultFonts.UNSANDED.drawText(canvas, "Tater best [:)  ]", 64, 128 * 2 + 32, 24, CanvasColor.BLUE_HIGH);
         DefaultFonts.UNSANDED.drawText(canvas, "T\u200cater best [:)  ]", 64, 128 * 2 + 32 + 25, 24, CanvasColor.BLUE_HIGH);
 
-        FontUtils.fromAwtFont(new Font("Comic Sans MS", Font.PLAIN, 64)).drawText(canvas, "Font test", 64, 128 * 2 + 32 + 25 + 32, 64, CanvasColor.YELLOW_HIGH);
+        //FontUtils.fromAwtFont(new Font("Comic Sans MS", Font.PLAIN, 64)).drawText(canvas, "Font test", 64, 128 * 2 + 32 + 25 + 32, 64, CanvasColor.YELLOW_HIGH);
 
         if (this.logo != null) {
             CanvasUtils.draw(canvas, canvas.getWidth() - 64, canvas.getHeight() - 64, 64, 64, this.logo);
@@ -108,6 +111,7 @@ public class TaterDemoRenderer implements ActiveRenderer {
         }
 
         //DefaultFonts.VANILLA.drawText(ViewUtils.rotate(canvas, MathHelper.PI), "Test", , CanvasColor.RED_HIGH);
+        DefaultFonts.VANILLA.drawText(canvas, "" + ((System.nanoTime() - timeX) / 1000000), 1, 1, 16, CanvasColor.WHITE_HIGH);
     }
 
     @Override
