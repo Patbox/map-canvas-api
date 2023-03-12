@@ -62,6 +62,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         this.clickDetection = clickDetection;
     }
 
+    @Deprecated
     public static Builder builder() {
         return new Builder();
     }
