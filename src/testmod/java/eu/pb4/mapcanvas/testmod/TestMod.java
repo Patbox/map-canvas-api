@@ -20,6 +20,7 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.MapColor;
 import net.minecraft.command.argument.BlockRotationArgumentType;
 import net.minecraft.server.MinecraftServer;
@@ -58,8 +59,8 @@ public class TestMod implements ModInitializer {
     private CanvasFont fontUnsanded;
     private CanvasImage lastImage = null;
     private CanvasImage logo;
-    private CanvasFont font;
-    private CanvasFont fontHd;
+    private CanvasFont font = DefaultFonts.VANILLA;
+    private CanvasFont fontHd= DefaultFonts.VANILLA;
     private CanvasImage tater;
     private volatile ActiveRenderer currentRenderer;
     private List<Pair<String, ActiveRenderer>> renderers = new ArrayList<>();
@@ -68,6 +69,22 @@ public class TestMod implements ModInitializer {
     private Thread rendererThread;
     private volatile boolean activeRenderer = false;
     private CanvasFont pixel;
+
+    private int testWorld(CommandContext<ServerCommandSource> ctx) {
+        try {
+            var dirVert = Direction.byId(IntegerArgumentType.getInteger(ctx, "dirVert"));
+            var dirHor = Direction.byId(IntegerArgumentType.getInteger(ctx, "dirHor"));
+
+            var canvas = MinecraftWorldCanvas.of(ctx.getSource().getWorld(), BlockPos.ofFloored(ctx.getSource().getPosition()), dirVert, dirHor);
+
+            //DefaultFonts.VANILLA.drawText(canvas, "Hello world!", 0, 0, 8, CanvasColor.BLACK_HIGH);
+            CanvasUtils.draw(canvas, 0, 0, this.lastImage);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
 
 
     private int test(CommandContext<ServerCommandSource> ctx) {
@@ -89,8 +106,8 @@ public class TestMod implements ModInitializer {
                 });
             };
 
-            this.display = VirtualDisplay.builder(this.canvas, new BlockPos(ctx.getSource().getPosition()), Direction.byId(dir))
-                    .rotation(rot).invisible().glowing().callback(callback).build();
+            this.display = VirtualDisplay.builder(this.canvas, BlockPos.ofFloored(ctx.getSource().getPosition()), Direction.byId(dir))
+                    .rotation(rot).raycast().invisible().glowing().callback(callback).build();
             for (var player : ctx.getSource().getServer().getPlayerManager().getPlayerList()) {
                 this.display.addPlayer(player);
             }
@@ -110,6 +127,15 @@ public class TestMod implements ModInitializer {
                                             .executes(this::test)
                                     )
                     )
+            );
+
+            dispatcher.register(
+                    literal("testworld").then(
+                            argument("dirVert", IntegerArgumentType.integer(0, Direction.values().length)).then(
+                                    argument("dirHor", IntegerArgumentType.integer(0, Direction.values().length))
+                                            .executes(this::testWorld)
+                                    )
+                            )
             );
             dispatcher.register(
                     literal("input").then(

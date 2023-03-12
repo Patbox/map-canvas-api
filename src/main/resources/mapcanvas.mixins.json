@@ -5,12 +5,11 @@
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "EntityAccessor",
+    "InteractionEntityAccessor",
     "ItemFrameEntityAccessor",
     "PlayerInteractEntityC2SPacketAccessor",
-    "PlayerManagerMixin",
     "ServerPlayerEntityMixin",
-    "ServerPlayNetworkHandlerMixin",
-    "SlimeEntityAccessor"
+    "ServerPlayNetworkHandlerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -142,8 +142,8 @@ public abstract class AbstractPlayerMapCanvas extends BaseMapCanvas implements P
             var players = this.getPlayers();
             synchronized (players) {
                 for (var player : players) {
-                    if (player.connection.isOpen()) {
-                        player.connection.send(packet);
+                    if (player.isConnectionOpen()) {
+                        player.sendPacket(packet);
                     }
                 }
             }

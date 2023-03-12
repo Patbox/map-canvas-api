@@ -22,16 +22,11 @@ import java.util.Set;
 @Mixin(ServerPlayerEntity.class)
 public class ServerPlayerEntityMixin implements PlayerInterface {
     private final Int2ObjectMap<VirtualDisplay> mapcanvas_displays = new Int2ObjectOpenHashMap<>();
-    private final Map<VirtualDisplay, Box> mapcanvas_boxes = new Object2ObjectOpenHashMap<>();
 
     @Override
-    public void mapcanvas_addDisplay(IntList ids, VirtualDisplay display, @Nullable Box box) {
+    public void mapcanvas_addDisplay(IntList ids, VirtualDisplay display) {
         for (int id : ids) {
             this.mapcanvas_displays.put(id, display);
-        }
-
-        if (box != null) {
-            this.mapcanvas_boxes.put(display, box);
         }
     }
 
@@ -40,7 +35,6 @@ public class ServerPlayerEntityMixin implements PlayerInterface {
         for (int id : ids) {
             this.mapcanvas_displays.remove(id);
         }
-        this.mapcanvas_boxes.remove(display);
     }
 
     @Override
@@ -53,16 +47,10 @@ public class ServerPlayerEntityMixin implements PlayerInterface {
         this.mapcanvas_removeAll();
     }
 
-    @Override
-    public Set<Map.Entry<VirtualDisplay, Box>> mapcanvas_getBoxes() {
-        return this.mapcanvas_boxes.entrySet();
-    }
-
     @Unique
     private void mapcanvas_removeAll() {
         for (var entry : new ArrayList<>(this.mapcanvas_displays.values())) {
             entry.removePlayer((ServerPlayerEntity) (Object) this);
         }
-        this.mapcanvas_boxes.clear();
     }
 }

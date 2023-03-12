@@ -9,9 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 public interface PlayerInterface {
-    void mapcanvas_addDisplay(IntList ids, VirtualDisplay display, @Nullable Box box);
+    void mapcanvas_addDisplay(IntList ids, VirtualDisplay display);
     void mapcanvas_removeDisplay(IntList ids, VirtualDisplay display);
 
     VirtualDisplay mapcanvas_getDisplay(int id);
-    Set<Map.Entry<VirtualDisplay, Box>> mapcanvas_getBoxes();
 }
