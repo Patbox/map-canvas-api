@@ -67,7 +67,7 @@ public class RaycastRenderer implements ActiveRenderer {
 
         var pos = new Vec3d(this.entity.getX(), this.entity.getY() + this.entity.getStandingEyeHeight(), this.entity.getZ());
 
-        var world =  this.entity.world;
+        var world =  this.entity.getWorld();
         for (var x = 0; x < width; x++) {
             float yawAngle = (float) -Math.toRadians(yaw + (x - halfWidth) / 4 * pixelSize);
             float yawCos = MathHelper.cos(yawAngle);
@@ -104,7 +104,7 @@ public class RaycastRenderer implements ActiveRenderer {
                 int pY = y * pixelSize;
 
                 if (cast != null) {
-                    var state = this.entity.world.getBlockState(cast.getBlockPos());
+                    var state = this.entity.getWorld().getBlockState(cast.getBlockPos());
 
                     if (state.getBlock() instanceof PillarBlock) {
                         state = switch (state.get(PillarBlock.AXIS)) {
@@ -126,7 +126,7 @@ public class RaycastRenderer implements ActiveRenderer {
                         };
                     }
 
-                    var mapColor = state.getMapColor(this.entity.world, cast.getBlockPos());
+                    var mapColor = state.getMapColor(this.entity.getWorld(), cast.getBlockPos());
                     if (mapColor == MapColor.CLEAR) {
                         mapColor = MapColor.WHITE_GRAY;
                     }

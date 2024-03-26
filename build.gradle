@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '0.12-SNAPSHOT'
+	id 'fabric-loom' version '1.4.+'
 	id 'maven-publish'
 }
 
@@ -60,8 +60,8 @@ dependencies {
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
 	// You may need to force-disable transitiveness on them.
-	modCompileOnly modLocalRuntime("eu.pb4:polymer-common:0.4.0-pre.2+1.19.4-rc2")
-	modCompileOnly modLocalRuntime("eu.pb4:placeholder-api:2.0.0-rc.1+1.19.3")
+	modCompileOnly modLocalRuntime("eu.pb4:polymer-common:0.7.6+1.20.4")
+	modCompileOnly modLocalRuntime("eu.pb4:placeholder-api:2.3.0+1.20.3")
 
 	modCompileOnly modLocalRuntime("org.openjdk.jol:jol-core:0.10")
 

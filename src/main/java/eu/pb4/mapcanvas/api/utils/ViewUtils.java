@@ -2,6 +2,10 @@ package eu.pb4.mapcanvas.api.utils;
 
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.impl.view.*;
+import net.minecraft.util.math.MathHelper;
+import org.joml.Matrix3x2f;
+import org.joml.Matrix3x2fc;
+import org.joml.Vector2f;
 
 public final class ViewUtils {
     private ViewUtils() {
@@ -52,6 +56,43 @@ public final class ViewUtils {
     public static DrawableCanvas rotateDeg(DrawableCanvas source, float angle) {
         //return source;
         return rotate(source, (float) Math.toRadians(angle));
+    }
+
+    public static DrawableCanvas matrix(DrawableCanvas source, int width, int height, Matrix3x2fc matrix3x2f) {
+        //return source;
+        return new Matrix3x2fTransformedView(source, width, height, new Matrix3x2f(matrix3x2f).invert(), new Vector2f());
+    }
+
+    public static DrawableCanvas matrix(DrawableCanvas source, Matrix3x2fc matrix3x2f) {
+        int width = 0;
+        int height = 0;
+
+        var vec = new Vector2f(0, 0);
+        {
+            matrix3x2f.transformPosition(vec);
+            width = Math.max(width, MathHelper.ceil(vec.x));
+            height = Math.max(height, MathHelper.ceil(vec.y));
+        }
+        {
+            vec.set(0, source.getHeight());
+            matrix3x2f.transformPosition(vec);
+            width = Math.max(width, MathHelper.ceil(vec.x));
+            height = Math.max(height, MathHelper.ceil(vec.y));
+        }
+        {
+            vec.set(source.getWidth(), 0);
+            matrix3x2f.transformPosition(vec);
+            width = Math.max(width, MathHelper.ceil(vec.x));
+            height = Math.max(height, MathHelper.ceil(vec.y));
+        }
+        {
+            vec.set(source.getWidth(), source.getHeight());
+            matrix3x2f.transformPosition(vec);
+            width = Math.max(width, MathHelper.ceil(vec.x));
+            height = Math.max(height, MathHelper.ceil(vec.y));
+        }
+
+        return new Matrix3x2fTransformedView(source, width, height, new Matrix3x2f(matrix3x2f).invert(), vec);
     }
 
     @FunctionalInterface

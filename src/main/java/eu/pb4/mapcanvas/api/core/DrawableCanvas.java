@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-@ApiStatus.NonExtendable
 public interface DrawableCanvas {
     default void set(int x, int y, MapColor color, MapColor.Brightness brightness) {
         this.setRaw(x, y, color.getRenderColorByte(brightness));

@@ -367,6 +367,11 @@ public class TestMod implements ModInitializer {
             this.renderers.add(new Pair<>("Raycast", new RaycastRenderer(s)));
             this.renderers.add(new Pair<>("FontTest", new FontTestRenderer()));
             try {
+                this.renderers.add(new Pair<>("Color Test", new DownSamplingRenderer()));
+            } catch (Throwable e) {
+                e.printStackTrace();
+            }
+            try {
                 this.renderers.add(new Pair<>("Browser Test", new BrowserTestRenderer()));
             } catch (Throwable e) {
                 e.printStackTrace();

@@ -3,11 +3,8 @@ package eu.pb4.mapcanvas.testmod.advancedgui;
 import eu.pb4.mapcanvas.api.core.*;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.api.font.DefaultFonts;
-import eu.pb4.mapcanvas.api.font.FontUtils;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.utils.ViewUtils;
-import eu.pb4.mapcanvas.impl.font.AwtFont;
-import eu.pb4.mapcanvas.impl.view.Rotate90ClockwiseView;
 import net.minecraft.block.MapColor;
 import net.minecraft.item.DyeItem;
 import net.minecraft.item.Items;
@@ -16,9 +13,8 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.ClickType;
 import net.minecraft.util.math.MathHelper;
+import org.joml.Matrix3x2f;
 
-import javax.swing.text.View;
-import java.awt.*;
 import java.util.ArrayList;
 
 public class TaterDemoRenderer implements ActiveRenderer {
@@ -77,7 +73,14 @@ public class TaterDemoRenderer implements ActiveRenderer {
             var cos = Math.sin((double) time / 500 + 100000);
             var cos2 = Math.sin((double) time / 500 + 10545);
 
-            var rotater = ViewUtils.rotate(this.tater, (float) (time / 2000d % 360));
+            var scale = 2;
+
+            var rotater = ViewUtils.matrix(this.tater, this.tater.getWidth() * 3, this.tater.getHeight() * 3, new Matrix3x2f()
+                    .translate(this.tater.getWidth(), this.tater.getWidth() / scale * 2f)
+                    .rotateAbout((float) ((time / 2000d) % MathHelper.TAU), this.tater.getWidth() / 2f, this.tater.getHeight() / 2f)
+            );
+
+            //var rotater = ViewUtils.rotate(this.tater, (float) (time / 2000d % 360));
 
             CanvasUtils.draw(canvas, (int) Math.round(canvas.getWidth() / 2d - rotater.getWidth() / 2d), (int) Math.round(canvas.getHeight() / 2d - rotater.getHeight() / 2d), rotater);
             CanvasUtils.draw(canvas, (int) (outputCanvas.getWidth() / 2 + this.tater.getWidth() * cos), (int) (this.tater.getHeight() / 2 + 50 * sin), (int) ((cos2 + 1) * 32), (int) ((sin2 + 1) * 32), this.tater);

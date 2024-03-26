@@ -59,7 +59,7 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
         }
 
         for (var icon : state.getIcons()) {
-            canvas.createIcon(icon.getType(), icon.getX() - CanvasUtils.MAP_DATA_SIZE, icon.getZ() - CanvasUtils.MAP_DATA_SIZE, icon.getRotation(), icon.getText());
+            canvas.createIcon(icon.type(), icon.x() - CanvasUtils.MAP_DATA_SIZE, icon.z() - CanvasUtils.MAP_DATA_SIZE, icon.rotation(), icon.text());
         }
 
         return canvas;
@@ -85,7 +85,7 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
                             icon.getInt("Y"),
                             icon.getByte("Rot"),
                             icon.contains("Text", NbtElement.STRING_TYPE)
-                                    ? Text.Serializer.fromLenientJson(icon.getString("Text"))
+                                    ? Text.Serialization.fromJson(icon.getString("Text"))
                                     : null
                     );
                 }

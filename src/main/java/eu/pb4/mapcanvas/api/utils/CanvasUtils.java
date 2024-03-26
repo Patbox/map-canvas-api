@@ -12,7 +12,7 @@ import net.minecraft.util.math.MathHelper;
 import java.awt.image.BufferedImage;
 
 public final class CanvasUtils {
-    private static final byte[] RGB_TO_MAP = new byte[256*256*256];
+    private static final byte[] RGB_TO_MAP_LEGACY = new byte[256*256*256];
 
     public static final int MAP_DATA_SIZE = 128;
     public static final int MAP_ICON_SIZE = 256;
@@ -132,10 +132,10 @@ public final class CanvasUtils {
      */
     public static byte findClosestRawColor(int rgb) {
         rgb = rgb & 0xFFFFFF;
-        if (RGB_TO_MAP[rgb] == 0) {
-            RGB_TO_MAP[rgb] = findClosestColorMath(rgb).getRenderColor();
+        if (RGB_TO_MAP_LEGACY[rgb] == 0) {
+            RGB_TO_MAP_LEGACY[rgb] = findClosestColorMath(rgb).getRenderColor();
         }
-        return RGB_TO_MAP[rgb];
+        return RGB_TO_MAP_LEGACY[rgb];
     }
 
     /**
@@ -174,7 +174,7 @@ public final class CanvasUtils {
                     iconNbt.putInt("Y", icon.getY());
                     iconNbt.putByte("Rot", icon.getRotation());
                     if (icon.getText() != null) {
-                        iconNbt.putString("Text", Text.Serializer.toJson(icon.getText()));
+                        iconNbt.putString("Text", Text.Serialization.toJsonString(icon.getText()));
                     }
 
                     icons.add(iconNbt);
