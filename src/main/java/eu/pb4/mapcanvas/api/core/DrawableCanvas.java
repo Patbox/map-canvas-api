@@ -4,12 +4,6 @@ import eu.pb4.mapcanvas.impl.MapIdManager;
 import eu.pb4.mapcanvas.impl.MultiMapCanvasImpl;
 import eu.pb4.mapcanvas.impl.SingleMapCanvas;
 import net.minecraft.block.MapColor;
-import net.minecraft.item.map.MapIcon;
-import net.minecraft.text.Text;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
 
 public interface DrawableCanvas {
     default void set(int x, int y, MapColor color, MapColor.Brightness brightness) {

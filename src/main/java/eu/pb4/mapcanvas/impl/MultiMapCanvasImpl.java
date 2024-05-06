@@ -5,9 +5,11 @@ import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.api.core.PlayerCanvas;
 import eu.pb4.mapcanvas.api.core.CanvasIcon;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
+import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.item.map.MapIcon;
+import net.minecraft.item.map.MapDecorationType;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
@@ -15,12 +17,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
-    protected int width;
-    protected int height;
+    private int width;
+    private int height;
     private MapCanvasPart[] parts;
     private final Set<WrappedMapIcon> icons = new HashSet<>();
 
-    protected final Set<ServerPlayNetworkHandler> players = Collections.synchronizedSet(new HashSet<>());
+    private final Set<ServerPlayNetworkHandler> players = Collections.synchronizedSet(new HashSet<>());
 
     public MultiMapCanvasImpl(int width, int height) {
         this.resize(width, height);
@@ -122,7 +124,7 @@ public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
     }
 
     @Override
-    public CanvasIcon createIcon(MapIcon.Type type, boolean visible, int x, int y, byte rotation, @Nullable Text text) {
+    public CanvasIcon createIcon(RegistryEntry<MapDecorationType> type, boolean visible, int x, int y, byte rotation, @Nullable Text text) {
         int canvasX = x / CanvasUtils.MAP_ICON_SIZE;
         int canvasY = y / CanvasUtils.MAP_ICON_SIZE;
         var icon = new WrappedMapIcon(this.getSubCanvas(canvasX, canvasY).createIcon(type, visible, x % CanvasUtils.MAP_ICON_SIZE, y % CanvasUtils.MAP_ICON_SIZE, rotation, text), canvasX, canvasY);
@@ -188,6 +190,11 @@ public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
     }
 
     @Override
+    public MapIdComponent getIdComponent() {
+        return null;
+    }
+
+    @Override
     public void destroy() {
         if (this.isDestroyed()) {
             return;
@@ -219,12 +226,12 @@ public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
         }
 
         @Override
-        public MapIcon.Type getType() {
+        public RegistryEntry<MapDecorationType> getType() {
             return this.icon.getType();
         }
 
         @Override
-        public void setType(MapIcon.Type type) {
+        public void setType(RegistryEntry<MapDecorationType> type) {
             this.icon.setType(type);
         }
 

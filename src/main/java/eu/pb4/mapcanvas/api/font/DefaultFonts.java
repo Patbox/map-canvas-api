@@ -32,7 +32,7 @@ public final class DefaultFonts {
 
     /**
      * Unsanded by unascribed
-     * https://www.curseforge.com/minecraft/texture-packs/unsanded
+     * <a href="https://www.curseforge.com/minecraft/texture-packs/unsanded">...</a>
      */
     public static final CanvasFont UNSANDED;
 
@@ -40,7 +40,7 @@ public final class DefaultFonts {
     /**
      * Unsanded by unascribed
      * This version doesn't contain vanilla-filled characters
-     * https://www.curseforge.com/minecraft/texture-packs/unsanded
+     * <a href="https://www.curseforge.com/minecraft/texture-packs/unsanded">...</a>
      */
     public static final CanvasFont UNSANDED_BASE;
 

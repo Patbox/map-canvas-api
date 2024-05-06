@@ -6,6 +6,7 @@ import eu.pb4.mapcanvas.api.core.IconContainer;
 import net.minecraft.block.MapColor;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 
@@ -141,7 +142,7 @@ public final class CanvasUtils {
     /**
      * Converts canvas to nbt
      */
-    public static NbtCompound toNbt(DrawableCanvas canvas) {
+    public static NbtCompound toNbt(DrawableCanvas canvas, RegistryWrapper.WrapperLookup lookup) {
         var nbt = new NbtCompound();
         final int width = canvas.getWidth();
         final int height = canvas.getHeight();
@@ -168,13 +169,13 @@ public final class CanvasUtils {
 
                 for (var icon : iconsSource) {
                     var iconNbt = new NbtCompound();
-                    iconNbt.putByte("Type", icon.getType().getId());
+                    iconNbt.putString("TypeId", icon.getType().getKey().orElseThrow().getValue().toString());
                     iconNbt.putBoolean("Vis", icon.isVisible());
                     iconNbt.putInt("X", icon.getX());
                     iconNbt.putInt("Y", icon.getY());
                     iconNbt.putByte("Rot", icon.getRotation());
                     if (icon.getText() != null) {
-                        iconNbt.putString("Text", Text.Serialization.toJsonString(icon.getText()));
+                        iconNbt.putString("Text", Text.Serialization.toJsonString(icon.getText(), lookup));
                     }
 
                     icons.add(iconNbt);

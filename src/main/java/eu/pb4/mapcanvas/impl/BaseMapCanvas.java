@@ -4,7 +4,9 @@ import eu.pb4.mapcanvas.api.core.CanvasIcon;
 import eu.pb4.mapcanvas.api.core.IconContainer;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
-import net.minecraft.item.map.MapIcon;
+import net.minecraft.item.map.MapDecorationType;
+import net.minecraft.item.map.MapDecorationTypes;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,7 +61,7 @@ public abstract class BaseMapCanvas implements DrawableCanvas, IconContainer {
     }
 
     @Override
-    public CanvasIcon createIcon(MapIcon.Type type, boolean visible, int x, int y, byte rotation, @Nullable Text text) {
+    public CanvasIcon createIcon(RegistryEntry<MapDecorationType> type, boolean visible, int x, int y, byte rotation, @Nullable Text text) {
         var icon = new SimpleCanvasIcon(this.iconId++, visible, type, x, y, rotation, text);
         this.icons.add(icon);
 
@@ -79,7 +81,7 @@ public abstract class BaseMapCanvas implements DrawableCanvas, IconContainer {
     public final class SimpleCanvasIcon implements CanvasIcon {
         public final int id;
         private Text text;
-        private MapIcon.Type type = MapIcon.Type.PLAYER;
+        private RegistryEntry<MapDecorationType> type = MapDecorationTypes.PLAYER;
         private int x = 0;
         private int y = 0;
         private byte rotation = 0;
@@ -89,7 +91,7 @@ public abstract class BaseMapCanvas implements DrawableCanvas, IconContainer {
             this.id = id;
         }
 
-        protected SimpleCanvasIcon(int id, boolean visible, MapIcon.Type type, int x, int y, byte rotation, @Nullable Text text) {
+        protected SimpleCanvasIcon(int id, boolean visible, RegistryEntry<MapDecorationType> type, int x, int y, byte rotation, @Nullable Text text) {
             this.id = id;
             this.type = type;
             this.x = x;
@@ -100,12 +102,12 @@ public abstract class BaseMapCanvas implements DrawableCanvas, IconContainer {
         }
 
         @Override
-        public MapIcon.Type getType() {
+        public RegistryEntry<MapDecorationType> getType() {
             return this.type;
         }
 
         @Override
-        public void setType(MapIcon.Type type) {
+        public void setType(RegistryEntry<MapDecorationType> type) {
             if (this.type != type) {
                 this.type = type;
                 BaseMapCanvas.this.markIconsDirty();

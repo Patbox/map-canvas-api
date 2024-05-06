@@ -101,7 +101,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
 
     public final void addPlayer(ServerPlayerEntity player) {
         if (!player.isDisconnected() && !this.ids.isEmpty()) {
-            var list = new ArrayList<Packet<ClientPlayPacketListener>>();
+            var list = new ArrayList<Packet<? super ClientPlayPacketListener>>();
             for (var holder : this.holders) {
                 list.add(holder.spawnPacket);
                 list.add(holder.trackerPacket);

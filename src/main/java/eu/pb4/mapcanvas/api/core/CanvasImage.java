@@ -1,11 +1,17 @@
 package eu.pb4.mapcanvas.api.core;
 
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
-import net.minecraft.item.map.MapIcon;
+import net.minecraft.item.map.MapDecorationType;
+import net.minecraft.item.map.MapDecorationTypes;
 import net.minecraft.item.map.MapState;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
@@ -58,15 +64,15 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
             }
         }
 
-        for (var icon : state.getIcons()) {
-            canvas.createIcon(icon.type(), icon.x() - CanvasUtils.MAP_DATA_SIZE, icon.z() - CanvasUtils.MAP_DATA_SIZE, icon.rotation(), icon.text());
+        for (var icon : state.getDecorations()) {
+            canvas.createIcon(icon.type(), icon.x() - CanvasUtils.MAP_DATA_SIZE, icon.z() - CanvasUtils.MAP_DATA_SIZE, icon.rotation(), icon.name().orElse(null));
         }
 
         return canvas;
     }
 
     @Nullable
-    public static CanvasImage from(NbtCompound nbt) {
+    public static CanvasImage from(NbtCompound nbt, RegistryWrapper.WrapperLookup lookup) {
         try {
             if (nbt.getString("DataType").equals("MapCanvasImage") && nbt.getInt("Version") != 0) {
                 final int width = nbt.getInt("Width");
@@ -79,20 +85,23 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
                 for (var tmpIcon : nbt.getList("Icons", NbtElement.COMPOUND_TYPE)) {
                     var icon = (NbtCompound) tmpIcon;
                     image.createIcon(
-                            MapIcon.Type.byId(icon.getByte("Type")),
+                            lookup.getWrapperOrThrow(RegistryKeys.MAP_DECORATION_TYPE)
+                                    .getOptional(RegistryKey.of(RegistryKeys.MAP_DECORATION_TYPE, new Identifier(icon.getString("TypeId"))))
+                                    .map(x -> (RegistryEntry<MapDecorationType>) x)
+                                    .orElse(MapDecorationTypes.PLAYER),
                             icon.getBoolean("Vis"),
                             icon.getInt("X"),
                             icon.getInt("Y"),
                             icon.getByte("Rot"),
                             icon.contains("Text", NbtElement.STRING_TYPE)
-                                    ? Text.Serialization.fromJson(icon.getString("Text"))
+                                    ? Text.Serialization.fromJson(icon.getString("Text"), lookup)
                                     : null
                     );
                 }
 
                 return image;
             } else if (nbt.contains("DataVersion", NbtElement.INT_TYPE) && nbt.contains("data", NbtElement.COMPOUND_TYPE)) {
-                return from(MapState.fromNbt(nbt));
+                return from(MapState.fromNbt(nbt, lookup));
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -141,7 +150,7 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
     }
 
     @Override
-    public CanvasIcon createIcon(MapIcon.Type type, boolean visible, int x, int y, byte rotation, @Nullable Text text) {
+    public CanvasIcon createIcon(RegistryEntry<MapDecorationType> type, boolean visible, int x, int y, byte rotation, @Nullable Text text) {
         var icon = new ImageCanvasIcon(this.iconId++, visible, type, x, y, rotation, text);
         this.icons.add(icon);
         return icon;
@@ -155,7 +164,7 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
     private final class ImageCanvasIcon implements CanvasIcon {
         public final int id;
         private Text text;
-        private MapIcon.Type type = MapIcon.Type.PLAYER;
+        private RegistryEntry<MapDecorationType> type = MapDecorationTypes.PLAYER;
         private int x = 0;
         private int y = 0;
         private byte rotation = 0;
@@ -165,7 +174,7 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
             this.id = id;
         }
 
-        protected ImageCanvasIcon(int id, boolean visible, MapIcon.Type type, int x, int y, byte rotation, @Nullable Text text) {
+        protected ImageCanvasIcon(int id, boolean visible, RegistryEntry<MapDecorationType> type, int x, int y, byte rotation, @Nullable Text text) {
             this.id = id;
             this.type = type;
             this.x = x;
@@ -176,12 +185,12 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
         }
 
         @Override
-        public MapIcon.Type getType() {
+        public RegistryEntry<MapDecorationType> getType() {
             return this.type;
         }
 
         @Override
-        public void setType(MapIcon.Type type) {
+        public void setType(RegistryEntry<MapDecorationType> type) {
             if (this.type != type) {
                 this.type = type;
             }

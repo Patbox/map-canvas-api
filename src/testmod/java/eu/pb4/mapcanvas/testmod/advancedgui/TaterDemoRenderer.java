@@ -8,7 +8,8 @@ import eu.pb4.mapcanvas.api.utils.ViewUtils;
 import net.minecraft.block.MapColor;
 import net.minecraft.item.DyeItem;
 import net.minecraft.item.Items;
-import net.minecraft.item.map.MapIcon;
+import net.minecraft.item.map.MapDecorationTypes;
+import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.ClickType;
@@ -34,12 +35,12 @@ public class TaterDemoRenderer implements ActiveRenderer {
 
     @Override
     public void setup(PlayerCanvas canvas) {
-        this.fpsIcon = canvas.createIcon(MapIcon.Type.TARGET_POINT, 32, 32);
+        this.fpsIcon = canvas.createIcon(MapDecorationTypes.TARGET_POINT, 32, 32);
 
         var list = new ArrayList<CanvasIcon>();
         for (int i = 0; i < 256; i++) {
             Text text = i % 32 == 0 ? Text.literal("" + i) : null;
-            list.add(canvas.createIcon(MapIcon.Type.values()[i % MapIcon.Type.values().length], i * 3, canvas.getHeight(), (byte) i, text));
+            list.add(canvas.createIcon(Registries.MAP_DECORATION_TYPE.getEntry(i % Registries.MAP_DECORATION_TYPE.size()).get(), i * 3, canvas.getHeight(), (byte) i, text));
         }
 
         this.icons = list.toArray(new CanvasIcon[0]);

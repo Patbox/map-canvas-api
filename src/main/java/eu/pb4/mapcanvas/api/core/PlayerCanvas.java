@@ -1,5 +1,7 @@
 package eu.pb4.mapcanvas.api.core;
 
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
@@ -25,6 +27,7 @@ public interface PlayerCanvas extends DrawableCanvas, IconContainer {
     boolean isDirty();
 
     int getId();
+    MapIdComponent getIdComponent();
 
     default int getIconHeight() {
         return this.getHeight() * 2;
@@ -36,7 +39,7 @@ public interface PlayerCanvas extends DrawableCanvas, IconContainer {
 
     default ItemStack asStack() {
         var stack = new ItemStack(Items.FILLED_MAP);
-        stack.getOrCreateNbt().putInt("map", this.getId());
+        stack.set(DataComponentTypes.MAP_ID, this.getIdComponent());
         return stack;
     }
 

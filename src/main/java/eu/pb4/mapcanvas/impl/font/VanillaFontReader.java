@@ -2,6 +2,8 @@ package eu.pb4.mapcanvas.impl.font;
 
 import com.google.gson.JsonParser;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
+import net.minecraft.registry.DynamicRegistryManager;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -23,7 +25,7 @@ public class VanillaFontReader {
                 var json = JsonParser.parseString(new String(stream.readAllBytes()));
                 stream.close();
 
-                lines.add(Text.Serialization.fromJsonTree(json.getAsJsonObject().get("pack").getAsJsonObject().get("description")).getString());
+                lines.add(Text.Serialization.fromJsonTree(json.getAsJsonObject().get("pack").getAsJsonObject().get("description"), DynamicRegistryManager.of(Registries.REGISTRIES)).getString());
             } catch (Exception e) {
 
             }

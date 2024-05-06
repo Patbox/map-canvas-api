@@ -2,16 +2,19 @@ package eu.pb4.mapcanvas.impl;
 
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.core.PlayerCanvas;
-import net.minecraft.item.map.MapIcon;
+import net.minecraft.component.type.MapIdComponent;
+import net.minecraft.item.map.MapDecoration;
 import net.minecraft.item.map.MapState;
 import net.minecraft.network.packet.s2c.play.MapUpdateS2CPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Optional;
 
 public abstract class AbstractPlayerMapCanvas extends BaseMapCanvas implements PlayerCanvas {
     private final int mapId;
+    private final MapIdComponent mapIdComponent;
 
     private boolean isDirty = false;
     private int changedMinX = CanvasUtils.MAP_DATA_SIZE;
@@ -23,6 +26,7 @@ public abstract class AbstractPlayerMapCanvas extends BaseMapCanvas implements P
 
     public AbstractPlayerMapCanvas(int id) {
         this.mapId = id;
+        this.mapIdComponent = new MapIdComponent(id);
     }
 
     @Override
@@ -38,20 +42,25 @@ public abstract class AbstractPlayerMapCanvas extends BaseMapCanvas implements P
     }
 
     protected void sendFull(ServerPlayNetworkHandler player) {
-        var icons = new ArrayList<MapIcon>();
+        var icons = new ArrayList<MapDecoration>();
 
         for (var icon : this.icons) {
             if (icon.isVisible()) {
-                icons.add(new MapIcon(icon.getType(), (byte) (icon.getX() - 128), (byte) (icon.getY() - 128), icon.getRotation(), icon.getText()));
+                icons.add(new MapDecoration(icon.getType(), (byte) (icon.getX() - 128), (byte) (icon.getY() - 128), icon.getRotation(), Optional.ofNullable(icon.getText())));
             }
         }
 
-        player.sendPacket(new MapUpdateS2CPacket(this.mapId, (byte) 0, true, icons, new MapState.UpdateData(0, 0, CanvasUtils.MAP_DATA_SIZE, CanvasUtils.MAP_DATA_SIZE, this.data)));
+        player.sendPacket(new MapUpdateS2CPacket(this.mapIdComponent, (byte) 0, true, icons, new MapState.UpdateData(0, 0, CanvasUtils.MAP_DATA_SIZE, CanvasUtils.MAP_DATA_SIZE, this.data)));
     }
 
     @Override
     public int getId() {
         return this.mapId;
+    }
+
+    @Override
+    public MapIdComponent getIdComponent() {
+        return this.mapIdComponent;
     }
 
     @Override
@@ -101,7 +110,7 @@ public abstract class AbstractPlayerMapCanvas extends BaseMapCanvas implements P
         }
 
         MapState.UpdateData pixelData;
-        Collection<MapIcon> icons;
+        Collection<MapDecoration> icons;
 
         if (this.isDirty) {
             this.isDirty = false;
@@ -130,7 +139,7 @@ public abstract class AbstractPlayerMapCanvas extends BaseMapCanvas implements P
             icons = new ArrayList<>();
             for (var icon : this.icons) {
                 if (icon.isVisible()) {
-                    icons.add(new MapIcon(icon.getType(), (byte) (icon.getX() - 128), (byte) (icon.getY() - 128), icon.getRotation(), icon.getText()));
+                    icons.add(new MapDecoration(icon.getType(), (byte) (icon.getX() - 128), (byte) (icon.getY() - 128), icon.getRotation(), Optional.ofNullable(icon.getText())));
                 }
             }
         } else {
@@ -138,7 +147,7 @@ public abstract class AbstractPlayerMapCanvas extends BaseMapCanvas implements P
         }
 
         if (pixelData != null || icons != null) {
-            var packet = new MapUpdateS2CPacket(this.mapId, (byte) 0, true, icons, pixelData);
+            var packet = new MapUpdateS2CPacket(this.mapIdComponent, (byte) 0, true, icons, pixelData);
             var players = this.getPlayers();
             synchronized (players) {
                 for (var player : players) {

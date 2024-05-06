@@ -1,15 +1,16 @@
 package eu.pb4.mapcanvas.api.core;
 
-import net.minecraft.item.map.MapIcon;
+import net.minecraft.item.map.MapDecorationType;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.NonExtendable
 public interface CanvasIcon {
-    MapIcon.Type getType();
+    RegistryEntry<MapDecorationType> getType();
 
-    void setType(MapIcon.Type type);
+    void setType(RegistryEntry<MapDecorationType> type);
 
     int getX();
 
