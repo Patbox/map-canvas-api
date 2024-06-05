@@ -6,11 +6,14 @@ import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -38,12 +41,14 @@ public class VanillaFontReader {
 
 
     public static BitmapFont build(ZipFile[] files, CanvasFont.Metadata metadata, Identifier identifier) {
+        return build( new StackedZipFile(files)::getInputSteam, metadata, identifier);
+    }
+
+    public static BitmapFont build(Function<String, @Nullable InputStream> getter, CanvasFont.Metadata metadata, Identifier identifier) {
         var font = new BitmapFont(BitmapFont.Glyph.INVALID, metadata);
 
         try {
-            var file = new StackedZipFile(files);
-
-            parseFontFile(file, font, identifier);
+            parseFontFile(getter, font, identifier);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -51,11 +56,11 @@ public class VanillaFontReader {
         return font;
     }
 
-    private static void parseFontFile(StackedZipFile file, BitmapFont font, Identifier identifier) {
+    private static void parseFontFile(Function<String, @Nullable InputStream> file, BitmapFont font, Identifier identifier) {
         try {
-            var entry = file.getEntry("assets/" + identifier.getNamespace() + "/font/" + identifier.getPath() + ".json");
+            var entry = file.apply("assets/" + identifier.getNamespace() + "/font/" + identifier.getPath() + ".json");
             if (entry != null) {
-                var json = JsonParser.parseString(new String(file.getInputStream(entry).readAllBytes())).getAsJsonObject().getAsJsonArray("providers");
+                var json = JsonParser.parseString(new String(entry.readAllBytes())).getAsJsonObject().getAsJsonArray("providers");
 
                 for (var tmp : json) {
                     var obj = tmp.getAsJsonObject();
@@ -64,7 +69,7 @@ public class VanillaFontReader {
                         var type = obj.getAsJsonPrimitive("type").getAsString();
                         switch (type) {
                             case "bitmap" -> {
-                                var path = new Identifier(obj.getAsJsonPrimitive("file").getAsString());
+                                var path = Identifier.of(obj.getAsJsonPrimitive("file").getAsString());
                                 var ascent = obj.getAsJsonPrimitive("ascent").getAsInt();
                                 var height = 8;
                                 try {
@@ -73,7 +78,7 @@ public class VanillaFontReader {
                                     // NoOp
                                 }
 
-                                var input = file.getInputStream(file.getEntry("assets/" + path.getNamespace() + "/textures/" + path.getPath()));
+                                var input = file.apply("assets/" + path.getNamespace() + "/textures/" + path.getPath());
                                 if (input == null) {
                                     continue;
                                 }
@@ -161,6 +166,15 @@ public class VanillaFontReader {
                     }
                 } catch (Exception e) {
                 }
+            }
+            return null;
+        }
+
+        @Nullable
+        public InputStream getInputSteam(String s) {
+            var entry = getEntry(s);
+            if (entry != null) {
+                return getInputStream(entry);
             }
             return null;
         }

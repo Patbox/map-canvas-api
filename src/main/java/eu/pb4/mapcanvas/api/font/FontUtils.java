@@ -2,11 +2,13 @@ package eu.pb4.mapcanvas.api.font;
 
 import eu.pb4.mapcanvas.impl.font.*;
 import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.Font;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.function.Function;
 import java.util.zip.ZipFile;
 
 public final class FontUtils {
@@ -44,6 +46,19 @@ public final class FontUtils {
      */
     public static CanvasFont fromVanillaFormat(Identifier identifier, CanvasFont.Metadata metadata, ZipFile... zipFile) {
         return VanillaFontReader.build(zipFile, metadata, identifier);
+    }
+
+    /**
+     * Creates new font from vanilla definitions
+     * You can stack them to fill missing entries or use vanilla json definitions
+     *
+     * @param identifier font's identifier
+     * @param metadata font's metadata
+     * @param fileGetter file reading code
+     * @return Font
+     */
+    public static CanvasFont fromVanillaFormat(Identifier identifier, CanvasFont.Metadata metadata, Function<String, @Nullable InputStream> fileGetter) {
+        return VanillaFontReader.build(fileGetter, metadata, identifier);
     }
 
     /**

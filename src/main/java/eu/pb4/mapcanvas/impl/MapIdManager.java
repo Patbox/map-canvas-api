@@ -7,14 +7,14 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
 public class MapIdManager {
-    private static int currentMapId = -1;
+    private static int currentMapId = -10;
     private static final IntList freeEntityIds = new IntArrayList();
     private static final IntList freeMapIds = new IntArrayList();
 
 
     public static int requestEntityId() {
-        if (freeEntityIds.size() != 0) {
-            return freeEntityIds.removeInt(0);
+        if (!freeEntityIds.isEmpty()) {
+            return freeEntityIds.removeInt(freeEntityIds.size() - 1);
         }
         return EntityAccessor.getCurrentId().incrementAndGet();
     }
@@ -22,8 +22,8 @@ public class MapIdManager {
 
 
     public static int requestMapId() {
-        if (freeMapIds.size() != 0) {
-            return freeMapIds.removeInt(0);
+        if (!freeMapIds.isEmpty()) {
+            return freeMapIds.removeInt(freeEntityIds.size() - 1);
         }
         return currentMapId--;
     }

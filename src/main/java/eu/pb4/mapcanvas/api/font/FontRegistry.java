@@ -20,7 +20,7 @@ public final class FontRegistry {
     private CanvasFont defaultFont = BitmapFont.EMPTY;
 
     public FontRegistry() {
-        this.defaultFontId = new Identifier("minecraft:default");
+        this.defaultFontId = Identifier.of("minecraft:default");
     }
 
     public FontRegistry(Identifier defaultFont) {

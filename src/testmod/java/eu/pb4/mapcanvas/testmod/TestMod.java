@@ -285,12 +285,12 @@ public class TestMod implements ModInitializer {
             var pixelPack = new ZipFile(pixelPath.toFile());
             var jsonPack = new ZipFile(vanillaJsonPath.toFile());
 
-            this.font = FontUtils.fromVanillaFormat(new Identifier("minecraft:default"),
+            this.font = FontUtils.fromVanillaFormat(Identifier.of("minecraft:default"),
                     CanvasFont.Metadata.create("Minecraft Font", List.of("Mojang Studios"), "Default Minecraft Font"),
                     vanillaZip);
-            this.fontHd = FontUtils.fromVanillaFormat(new Identifier("minecraft:default"), hdPack, vanillaZip);
-            this.pixel = FontUtils.fromVanillaFormat(new Identifier("minecraft:default"), CanvasFont.Metadata.create("Pixel Perfection", List.of("XSSheep"), "Font from Pixel Perfection Resource Pack"), pixelPack, jsonPack);
-            this.fontUnsanded = FontUtils.fromVanillaFormat(new Identifier("minecraft:default"),
+            this.fontHd = FontUtils.fromVanillaFormat(Identifier.of("minecraft:default"), hdPack, vanillaZip);
+            this.pixel = FontUtils.fromVanillaFormat(Identifier.of("minecraft:default"), CanvasFont.Metadata.create("Pixel Perfection", List.of("XSSheep"), "Font from Pixel Perfection Resource Pack"), pixelPack, jsonPack);
+            this.fontUnsanded = FontUtils.fromVanillaFormat(Identifier.of("minecraft:default"),
                     CanvasFont.Metadata.create("Unsanded", List.of("unascribed"), "An 8px font with wide vertical strokes inspired by Chicago and Craft Sans."),
                     unsPack, jsonPack);
 
@@ -321,7 +321,7 @@ public class TestMod implements ModInitializer {
             {
                 var stream = new FileOutputStream(path.resolve("alt.mcaf").toFile());
 
-                RawBitmapFontSerializer.write((BitmapFont) FontUtils.fromVanillaFormat(new Identifier("minecraft:alt"),
+                RawBitmapFontSerializer.write((BitmapFont) FontUtils.fromVanillaFormat(Identifier.of("minecraft:alt"),
                         CanvasFont.Metadata.create("Minecraft Alt", List.of("Mojang Studios"), "Standard Galactic Alphabet font"),
                         vanillaZip), stream);
                 stream.close();
@@ -329,7 +329,7 @@ public class TestMod implements ModInitializer {
 
             {
                 var stream = new FileOutputStream(path.resolve("illageralt.mcaf").toFile());
-                RawBitmapFontSerializer.write((BitmapFont) FontUtils.fromVanillaFormat(new Identifier("minecraft:illageralt"),
+                RawBitmapFontSerializer.write((BitmapFont) FontUtils.fromVanillaFormat(Identifier.of("minecraft:illageralt"),
                         CanvasFont.Metadata.create("Illager Runes", List.of("Mojang Studios"), "Illager Runes from Minecraft Dungeons"),
                         vanillaZip), stream);
                 stream.close();

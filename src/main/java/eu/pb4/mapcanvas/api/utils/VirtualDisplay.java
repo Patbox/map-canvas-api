@@ -38,7 +38,7 @@ import java.util.*;
 
 public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, VirtualDisplay.Single {
     private final IntList ids = new IntArrayList();
-    private final List<Holder> holders = new ArrayList();
+    private final List<Holder> holders = new ArrayList<>();
     private final Int2ObjectMap<Holder> holderById = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectMap<Holder> clickableHolderById = new Int2ObjectOpenHashMap<>();
     private final boolean glowing;
@@ -81,12 +81,12 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
     }
 
     @Deprecated
-    public static final VirtualDisplay of(PlayerCanvas canvas, BlockPos pos, Direction direction, int rotation, boolean glowing) {
+    public static VirtualDisplay of(PlayerCanvas canvas, BlockPos pos, Direction direction, int rotation, boolean glowing) {
         return of(canvas, pos, direction, rotation, glowing, null);
     }
 
     @Deprecated
-    public static final VirtualDisplay of(PlayerCanvas canvas, BlockPos pos, Direction direction, int rotation, boolean glowing, @Nullable TypedInteractionCallback callback) {
+    public static VirtualDisplay of(PlayerCanvas canvas, BlockPos pos, Direction direction, int rotation, boolean glowing, @Nullable TypedInteractionCallback callback) {
         if (canvas instanceof CombinedPlayerCanvas combinedCanvas) {
             return new Combined(combinedCanvas, pos, glowing, direction, Math.abs(rotation % 4), true, callback != null ? ClickDetection.ENTITY : ClickDetection.NONE, callback);
         } else {
@@ -95,7 +95,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
     }
 
     @Deprecated
-    public static final VirtualDisplay of(PlayerCanvas canvas, BlockPos pos, Direction direction, int rotation, boolean glowing, @Nullable InteractionCallback callback) {
+    public static VirtualDisplay of(PlayerCanvas canvas, BlockPos pos, Direction direction, int rotation, boolean glowing, @Nullable InteractionCallback callback) {
         return of(canvas, pos, direction, rotation, glowing, (TypedInteractionCallback) callback);
     }
 
@@ -412,7 +412,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         private ClickDetection clickDetection = ClickDetection.NONE;
         private TypedInteractionCallback callback;
 
-        protected Builder() {
+        private Builder() {
         }
 
         public Builder canvas(PlayerCanvas canvas) {

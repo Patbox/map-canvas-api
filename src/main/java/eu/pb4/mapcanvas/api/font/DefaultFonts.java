@@ -46,11 +46,11 @@ public final class DefaultFonts {
 
     static {
         var path = FabricLoader.getInstance().getModContainer("map-canvas-api").get().getPath("fonts");
-        VANILLA = REGISTRY.register(new Identifier("minecraft:default"), read(path.resolve("vanilla.mcaf")));
-        ALT = REGISTRY.register(new Identifier("minecraft:alt"), read(path.resolve("alt.mcaf")));
-        ILLAGER_ALT = REGISTRY.register(new Identifier("minecraft:illageralt"), read(path.resolve("illageralt.mcaf")));
-        UNSANDED_BASE = REGISTRY.register(new Identifier("unsanded:base"), read(path.resolve("unsanded.mcaf")));
-        UNSANDED = REGISTRY.register(new Identifier("unsanded:full"), FontUtils.merge(UNSANDED_BASE, VANILLA));
+        VANILLA = REGISTRY.register(Identifier.of("minecraft:default"), read(path.resolve("vanilla.mcaf")));
+        ALT = REGISTRY.register(Identifier.of("minecraft:alt"), read(path.resolve("alt.mcaf")));
+        ILLAGER_ALT = REGISTRY.register(Identifier.of("minecraft:illageralt"), read(path.resolve("illageralt.mcaf")));
+        UNSANDED_BASE = REGISTRY.register(Identifier.of("unsanded:base"), read(path.resolve("unsanded.mcaf")));
+        UNSANDED = REGISTRY.register(Identifier.of("unsanded:full"), FontUtils.merge(UNSANDED_BASE, VANILLA));
     }
 
     private static CanvasFont read(Path path) {
