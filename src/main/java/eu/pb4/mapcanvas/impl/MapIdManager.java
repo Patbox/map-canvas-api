@@ -8,13 +8,13 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 
 public class MapIdManager {
     private static int currentMapId = -10;
-    private static final IntList freeEntityIds = new IntArrayList();
-    private static final IntList freeMapIds = new IntArrayList();
+    private static final IntArrayList freeEntityIds = new IntArrayList();
+    private static final IntArrayList freeMapIds = new IntArrayList();
 
 
     public static int requestEntityId() {
         if (!freeEntityIds.isEmpty()) {
-            return freeEntityIds.removeInt(freeEntityIds.size() - 1);
+            return freeEntityIds.popInt();
         }
         return EntityAccessor.getCurrentId().incrementAndGet();
     }
@@ -23,20 +23,20 @@ public class MapIdManager {
 
     public static int requestMapId() {
         if (!freeMapIds.isEmpty()) {
-            return freeMapIds.removeInt(freeEntityIds.size() - 1);
+            return freeMapIds.popInt();
         }
         return currentMapId--;
     }
 
     public static void freeMapId(int mapId) {
         if (!freeMapIds.contains(mapId)) {
-            freeMapIds.add(mapId);
+            freeMapIds.push(mapId);
         }
     }
 
     public static void freeEntityId(int entityId) {
         if (!freeEntityIds.contains(entityId)) {
-            freeEntityIds.add(entityId);
+            freeEntityIds.push(entityId);
         }
     }
 }
