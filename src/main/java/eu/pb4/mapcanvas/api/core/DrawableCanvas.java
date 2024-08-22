@@ -31,8 +31,10 @@ public interface DrawableCanvas {
     void setRaw(int x, int y, byte color);
 
     default void fillRaw(byte color) {
-        for (int x = 0; x < this.getWidth(); x++) {
-            for (int y = 0; y < this.getHeight(); y++) {
+        int width = this.getWidth();
+        int height = this.getHeight();
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
                 this.setRaw(x, y, color);
             }
         }
