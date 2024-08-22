@@ -18,7 +18,7 @@ public interface IconContainer {
     }
 
     default CanvasIcon createIcon(RegistryEntry<MapDecorationType> type, int x, int y, byte rotation, @Nullable Text text) {
-        return this.createIcon(type, true, x, y,  (byte) 0, text);
+        return this.createIcon(type, true, x, y, rotation, text);
     }
 
     Collection<CanvasIcon> getIcons();
