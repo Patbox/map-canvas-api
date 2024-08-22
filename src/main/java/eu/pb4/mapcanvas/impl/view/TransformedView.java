@@ -17,6 +17,11 @@ public record TransformedView(DrawableCanvas source, ViewUtils.Transformer trans
     }
 
     @Override
+    public void fillRaw(byte color) {
+        this.source.fillRaw(color);
+    }
+
+    @Override
     public int getHeight() {
         return this.source.getHeight();
     }

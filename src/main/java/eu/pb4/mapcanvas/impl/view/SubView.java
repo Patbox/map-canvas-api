@@ -20,6 +20,11 @@ public record SubView(DrawableCanvas source, int x1, int y1, int width, int heig
     }
 
     @Override
+    public void fillRaw(byte color) {
+        this.source.fillRaw(color);
+    }
+
+    @Override
     public int getHeight() {
         return this.height;
     }

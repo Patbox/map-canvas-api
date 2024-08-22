@@ -128,6 +128,11 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
     }
 
     @Override
+    public void fillRaw(byte color) {
+        Arrays.fill(this.data, color);
+    }
+
+    @Override
     public int getHeight() {
         return this.height;
     }
