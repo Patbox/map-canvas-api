@@ -26,15 +26,7 @@ public final class CanvasUtils {
     }
 
     public static void clear(DrawableCanvas canvas, CanvasColor color) {
-        final int width = canvas.getWidth();
-        final int height = canvas.getHeight();
-        final byte renderColor = color.getRenderColor();
-
-        for (int x = 0; x < width; x++) {
-            for (int y = 0; y < height; y++) {
-                canvas.setRaw(x, y, renderColor);
-            }
-        }
+        canvas.fill(color);
     }
 
     public static void fill(DrawableCanvas canvas, int x1, int y1, int x2, int y2, CanvasColor color) {
