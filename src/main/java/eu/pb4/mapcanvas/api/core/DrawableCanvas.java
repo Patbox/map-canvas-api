@@ -18,9 +18,27 @@ public interface DrawableCanvas {
         return CanvasColor.BY_RENDER_COLOR[Byte.toUnsignedInt(this.getRaw(x, y))];
     }
 
+    default void fill(MapColor color, MapColor.Brightness brightness) {
+        this.fillRaw(color.getRenderColorByte(brightness));
+    }
+
+    default void fill(CanvasColor color) {
+        this.fillRaw(color.renderColor);
+    }
+
     byte getRaw(int x, int y);
 
     void setRaw(int x, int y, byte color);
+
+    default void fillRaw(byte color) {
+        int width = this.getWidth();
+        int height = this.getHeight();
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                this.setRaw(x, y, color);
+            }
+        }
+    }
 
     int getHeight();
 

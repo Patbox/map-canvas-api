@@ -14,6 +14,11 @@ public record YSkewedView(DrawableCanvas source, double skewPerPixel) implements
     }
 
     @Override
+    public void fillRaw(byte color) {
+        this.source.fillRaw(color);
+    }
+
+    @Override
     public int getHeight() {
         return this.source.getHeight();
     }

@@ -114,6 +114,13 @@ public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
     }
 
     @Override
+    public void fillRaw(byte color) {
+        for (MapCanvasPart part : this.parts) {
+            part.fillRaw(color);
+        }
+    }
+
+    @Override
     public int getHeight() {
         return this.height * CanvasUtils.MAP_DATA_SIZE;
     }

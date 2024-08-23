@@ -1,8 +1,6 @@
 package eu.pb4.mapcanvas.impl.view;
 
-import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
-import org.joml.Matrix3x2f;
 import org.joml.Matrix3x2fc;
 import org.joml.Vector2f;
 
@@ -27,6 +25,11 @@ public record Matrix3x2fTransformedView(DrawableCanvas source, int width, int he
         }
 
         this.source.setRaw((int) this.ownVec.x, (int) this.ownVec.y, color);
+    }
+
+    @Override
+    public void fillRaw(byte color) {
+        this.source.fillRaw(color);
     }
 
     @Override

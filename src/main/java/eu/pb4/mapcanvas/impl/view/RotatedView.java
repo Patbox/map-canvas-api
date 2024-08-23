@@ -81,6 +81,11 @@ public class RotatedView implements DrawableCanvas {
     }
 
     @Override
+    public void fillRaw(byte color) {
+        this.source.fillRaw(color);
+    }
+
+    @Override
     public int getHeight() {
         return this.width;
     }

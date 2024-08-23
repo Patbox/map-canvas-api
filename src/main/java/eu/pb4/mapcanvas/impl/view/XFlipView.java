@@ -14,6 +14,11 @@ public record XFlipView(DrawableCanvas source) implements DrawableCanvas {
     }
 
     @Override
+    public void fillRaw(byte color) {
+        this.source.fillRaw(color);
+    }
+
+    @Override
     public int getHeight() {
         return this.source.getHeight();
     }

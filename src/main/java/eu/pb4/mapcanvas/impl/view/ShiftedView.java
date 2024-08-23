@@ -14,6 +14,11 @@ public record ShiftedView(DrawableCanvas source, int width, int height) implemen
     }
 
     @Override
+    public void fillRaw(byte color) {
+        this.source.fillRaw(color);
+    }
+
+    @Override
     public int getHeight() {
         return this.height;
     }

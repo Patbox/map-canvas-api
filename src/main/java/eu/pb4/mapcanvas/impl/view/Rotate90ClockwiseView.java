@@ -14,6 +14,11 @@ public record Rotate90ClockwiseView(DrawableCanvas source) implements DrawableCa
     }
 
     @Override
+    public void fillRaw(byte color) {
+        this.source.fillRaw(color);
+    }
+
+    @Override
     public int getHeight() {
         return this.source.getWidth();
     }
