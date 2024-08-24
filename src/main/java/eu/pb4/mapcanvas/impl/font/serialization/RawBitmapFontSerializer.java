@@ -1,15 +1,9 @@
 package eu.pb4.mapcanvas.impl.font.serialization;
 
-import com.google.common.primitives.Ints;
 import com.google.common.primitives.Shorts;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.impl.font.BitmapFont;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.apache.commons.compress.compressors.xz.XZCompressorInputStream;
-import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream;
-import org.tukaani.xz.LZMA2Options;
-import org.tukaani.xz.XZInputStream;
-import org.tukaani.xz.XZOutputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
