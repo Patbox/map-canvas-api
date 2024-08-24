@@ -60,9 +60,8 @@ dependencies {
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
 	// You may need to force-disable transitiveness on them.
-	modCompileOnly modLocalRuntime("eu.pb4:polymer-common:0.8.0-pre.1+1.20.6")
-	modCompileOnly modLocalRuntime("eu.pb4:placeholder-api:2.4.0-pre.1+1.20.5")
-
+	modCompileOnly modLocalRuntime("eu.pb4:polymer-common:0.9.11+1.21.1")
+	modCompileOnly modLocalRuntime("eu.pb4:placeholder-api:2.4.1+1.21")
 	modCompileOnly modLocalRuntime("org.openjdk.jol:jol-core:0.10")
 
 

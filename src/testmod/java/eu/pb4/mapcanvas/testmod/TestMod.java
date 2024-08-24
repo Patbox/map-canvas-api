@@ -11,8 +11,11 @@ import eu.pb4.mapcanvas.api.font.FontUtils;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import eu.pb4.mapcanvas.impl.font.BitmapFont;
-import eu.pb4.mapcanvas.impl.font.RawBitmapFontSerializer;
+import eu.pb4.mapcanvas.impl.font.LazyFont;
+import eu.pb4.mapcanvas.impl.font.serialization.UniHexFontReader;
+import eu.pb4.mapcanvas.impl.font.serialization.RawBitmapFontSerializer;
 import eu.pb4.mapcanvas.testmod.advancedgui.*;
+import eu.pb4.polymer.common.api.PolymerCommonUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -20,7 +23,6 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.block.Blocks;
 import net.minecraft.block.MapColor;
 import net.minecraft.command.argument.BlockRotationArgumentType;
 import net.minecraft.server.MinecraftServer;
@@ -31,6 +33,8 @@ import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import org.apache.commons.io.FileUtils;
+import org.openjdk.jol.info.ClassLayout;
+import org.openjdk.jol.vm.VM;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -247,8 +251,16 @@ public class TestMod implements ModInitializer {
             e.printStackTrace();
         }
 
+        DefaultFonts.UNIFONT.requestLoad();
+        DefaultFonts.UNIFONT_JP.requestLoad();
+
+        DefaultFonts.UNIFONT.getGlyphWidth(0, 1, 0);
+
+        System.out.println("Vanilla: " + VM.current().sizeOf(((BitmapFont) DefaultFonts.VANILLA).characters.get('w').texture()));
+        System.out.println("Unifont: " + VM.current().sizeOf(((BitmapFont) ((LazyFont) DefaultFonts.UNIFONT).font()).characters.get('w').texture()));
+
         try {
-            var vanillaZip = new ZipFile(FabricLoader.getInstance().getGameDir().resolve("polymer_cache/client_jars/7e46fb47609401970e2818989fa584fd467cd036.jar").toFile());//PolymerUtils.getClientJar();
+            var vanillaZip = new ZipFile(PolymerCommonUtils.getClientJar().toFile());
 
             var compPath = FabricLoader.getInstance().getGameDir().resolve("coml.zip");
             var unsPath = FabricLoader.getInstance().getGameDir().resolve("uns.zip");
@@ -300,7 +312,7 @@ public class TestMod implements ModInitializer {
             {
                 var stream = new FileOutputStream(path.resolve("vanilla.mcaf").toFile());
 
-                RawBitmapFontSerializer.write((BitmapFont) this.font, stream);
+                RawBitmapFontSerializer.write((BitmapFont) this.font, stream, RawBitmapFontSerializer.Compression.GZIP);
                 stream.close();
             }
 
@@ -350,12 +362,6 @@ public class TestMod implements ModInitializer {
             e.printStackTrace();
         }
 
-        try {
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
         FontTestRenderer.FONTS.add(this.fontHd);
         FontTestRenderer.FONTS.add(this.pixel);
         FontTestRenderer.FONTS.add(FontUtils.fromAwtFont(new Font("Comic Sans MS", Font.PLAIN, 64)));
@@ -365,6 +371,7 @@ public class TestMod implements ModInitializer {
             this.renderers.add(new Pair<>("TaterDemo", new TaterDemoRenderer(this.tater, this.fontHd, this.logo)));
             this.renderers.add(new Pair<>("SimpleSurface", new SurfaceRenderer()));
             this.renderers.add(new Pair<>("Raycast", new RaycastRenderer(s)));
+            this.renderers.add(new Pair<>("BuiltInFontTest", new BuiltinFontTestRenderer()));
             this.renderers.add(new Pair<>("FontTest", new FontTestRenderer()));
             try {
                 this.renderers.add(new Pair<>("Color Test", new DownSamplingRenderer()));

@@ -2,18 +2,9 @@ package eu.pb4.mapcanvas.api.font;
 
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
-import eu.pb4.mapcanvas.api.utils.CanvasUtils;
-import eu.pb4.mapcanvas.api.utils.ViewUtils;
-import eu.pb4.mapcanvas.impl.font.StackedFont;
-import eu.pb4.mapcanvas.impl.font.VanillaFontReader;
-import net.minecraft.text.CharacterVisitor;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.zip.ZipFile;
 
 /**
  * Default representation of a font

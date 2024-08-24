@@ -6,7 +6,9 @@ import eu.pb4.mapcanvas.api.core.PlayerCanvas;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.api.font.DefaultFonts;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
+import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.TextParserUtils;
+import eu.pb4.placeholders.api.parsers.TagParser;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.ClickType;
@@ -18,7 +20,6 @@ import java.util.List;
 public class FontTestRenderer implements ActiveRenderer {
     public static final List<CanvasFont> FONTS = new ArrayList<>();
     private Text userText = Text.empty();
-
     @Override
     public void setup(PlayerCanvas canvas) {
 
@@ -27,8 +28,7 @@ public class FontTestRenderer implements ActiveRenderer {
     @Override
     public void render(PlayerCanvas outputCanvas, DrawableCanvas canvas, long time, int displayFps, int frame) {
         CanvasUtils.clear(canvas, CanvasColor.WHITE_HIGH);
-
-        var font = FONTS.get((int) (time / 1000 / 5) % FONTS.size());
+        var font = FONTS.get((int) (time / 1000 / 3) % FONTS.size());
 
         int i = 16;
 
@@ -85,7 +85,7 @@ public class FontTestRenderer implements ActiveRenderer {
 
     @Override
     public void onInput(String input) {
-        this.userText = TextParserUtils.formatText(input);
+        this.userText = TagParser.QUICK_TEXT.parseText(input, ParserContext.of());
     }
 
     static {

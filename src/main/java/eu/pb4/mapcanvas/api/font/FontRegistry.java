@@ -11,6 +11,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,7 +28,7 @@ public final class FontRegistry {
         this.defaultFontId = defaultFont;
     }
 
-    public CanvasFont register(Identifier identifier, CanvasFont font) {
+    public <T extends CanvasFont> T register(Identifier identifier, T font) {
         if (this.fonts.containsKey(identifier)) {
             throw new RuntimeException("Font " + identifier + " is already registered!");
         }
@@ -47,6 +48,10 @@ public final class FontRegistry {
     @Nullable
     public CanvasFont getFont(@Nullable Identifier font) {
         return this.fonts.get(font);
+    }
+
+    public Collection<Identifier> fonts() {
+        return this.fonts.keySet();
     }
 
 

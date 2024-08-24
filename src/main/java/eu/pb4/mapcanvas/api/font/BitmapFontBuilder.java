@@ -35,6 +35,10 @@ public final class BitmapFontBuilder {
         return this;
     }
 
+    public boolean has(int character) {
+        return this.characters.containsKey(character);
+    }
+
     /**
      * Sets default/undefinec glyph
      *
@@ -76,7 +80,7 @@ public final class BitmapFontBuilder {
         private final int height;
         private int logicalHeight = 8;
         private int ascend = 7;
-        private boolean[] texture;
+        private final boolean[] texture;
         private int fontWidth = 0;
 
         private Glyph(int width, int height) {

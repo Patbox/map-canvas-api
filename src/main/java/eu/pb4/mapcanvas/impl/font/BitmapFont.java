@@ -10,11 +10,11 @@ import net.minecraft.util.math.MathHelper;
 public final class BitmapFont implements CanvasFont {
     public static final BitmapFont EMPTY = new BitmapFont(Glyph.INVALID, Metadata.empty());
 
-    protected final Int2ObjectMap<Glyph> characters = new Int2ObjectOpenHashMap<>();
+    public final Int2ObjectMap<Glyph> characters = new Int2ObjectOpenHashMap<>();
     public final Glyph defaultGlyph;
     private final Metadata metadata;
 
-    protected BitmapFont(Glyph defaultGlyph, Metadata metadata) {
+    public BitmapFont(Glyph defaultGlyph, Metadata metadata) {
         this.defaultGlyph = defaultGlyph;
         this.metadata = metadata;
     }
@@ -40,10 +40,10 @@ public final class BitmapFont implements CanvasFont {
             return (int) (((glyph.fontWidth())) * (size / 8));
         }
 
-        final double textureScale = glyph.height() / glyph.logicalHeight();
+        final double textureScale = (double) glyph.height() / glyph.logicalHeight();
         final double baseScale = size / textureScale / 8;
 
-        return (int) (((glyph.fontWidth() + offset * textureScale)) * baseScale);
+        return (int) (((glyph.fontWidth() + offset)) * baseScale);
     }
 
     @Override
@@ -54,7 +54,7 @@ public final class BitmapFont implements CanvasFont {
             return (int) (((glyph.fontWidth())) * (size / 8));
         }
 
-        final double textureScale = glyph.height() / glyph.logicalHeight();
+        final double textureScale = (double) glyph.height() / glyph.logicalHeight();
         final double baseScale = size / textureScale / 8;
 
         for (int fX = 0; fX < glyph.width(); fX++) {
@@ -73,7 +73,7 @@ public final class BitmapFont implements CanvasFont {
             }
         }
 
-        return (int) (((glyph.fontWidth() + offset * textureScale)) * baseScale);
+        return (int) (((glyph.fontWidth() + offset)) * baseScale);
     }
 
     @Override

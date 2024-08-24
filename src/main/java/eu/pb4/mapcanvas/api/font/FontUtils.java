@@ -1,6 +1,9 @@
 package eu.pb4.mapcanvas.api.font;
 
 import eu.pb4.mapcanvas.impl.font.*;
+import eu.pb4.mapcanvas.impl.font.serialization.RawBitmapFontSerializer;
+import eu.pb4.mapcanvas.impl.font.serialization.UniHexFontReader;
+import eu.pb4.mapcanvas.impl.font.serialization.VanillaFontReader;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +15,7 @@ import java.util.function.Function;
 import java.util.zip.ZipFile;
 
 public final class FontUtils {
-    private FontUtils(){}
+    private FontUtils() {}
     /**
      * Merges multiple fonts into one, allowing to stack/fill up possible missing characters
      *
@@ -21,6 +24,16 @@ public final class FontUtils {
      */
     public static CanvasFont merge(CanvasFont... fonts) {
         return new StackedFont(fonts);
+    }
+
+    /**
+     * Merges multiple fonts into one, allowing to stack/fill up possible missing characters
+     *
+     * @param fonts fonts to merge
+     * @return single font with merged characters
+     */
+    public static CanvasFont merge(CanvasFont.Metadata metadata, CanvasFont... fonts) {
+        return new StackedFont(fonts, metadata);
     }
 
     /**
@@ -59,6 +72,23 @@ public final class FontUtils {
      */
     public static CanvasFont fromVanillaFormat(Identifier identifier, CanvasFont.Metadata metadata, Function<String, @Nullable InputStream> fileGetter) {
         return VanillaFontReader.build(fileGetter, metadata, identifier);
+    }
+
+    /**
+     * Creates new font from Unifont's .hex format
+     * You can stack them to fill missing entries or use vanilla json definitions
+     *
+     * @param fontFile stream reading .hex file
+     * @param metadata font's metadata
+     * @return Font
+     */
+    public static CanvasFont fromUniHexFormat(InputStream fontFile, CanvasFont.Metadata metadata) {
+        try {
+            return UniHexFontReader.build(fontFile, metadata);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return BitmapFont.EMPTY;
+        }
     }
 
     /**
