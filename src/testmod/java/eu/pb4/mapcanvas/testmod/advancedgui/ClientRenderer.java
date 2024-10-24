@@ -45,7 +45,7 @@ public class ClientRenderer implements ActiveRenderer {
                     int iY = (int) (y * scale);
 
                     if (iX >= 0 && iX < imageWidth && iY < imageHeight) {
-                        int color = this.source.getColor(iX, iY);
+                        int color = this.source.getColorArgb(iX, iY);
 
                         final int redCanvas = (color) & 0xFF;
                         final int greenCanvas = (color >> 8) & 0xFF;

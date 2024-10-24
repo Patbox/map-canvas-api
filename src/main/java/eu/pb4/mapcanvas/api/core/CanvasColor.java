@@ -269,13 +269,7 @@ public final class CanvasColor {
         this.brightness = brightness;
         this.renderColor = color.getRenderColorByte(this.brightness);
 
-        var bgr = color.getRenderColor(brightness);
-
-        final int redCanvas = (bgr) & 0xFF;
-        final int greenCanvas = (bgr >> 8) & 0xFF;
-        final int blueCanvas = (bgr >> 16) & 0xFF;
-
-        this.rgbColor = redCanvas << 16 | greenCanvas << 8 | blueCanvas;
+        this.rgbColor = color.getRenderColor(brightness);
 
         BY_RENDER_COLOR[Byte.toUnsignedInt(this.renderColor)] = this;
     }

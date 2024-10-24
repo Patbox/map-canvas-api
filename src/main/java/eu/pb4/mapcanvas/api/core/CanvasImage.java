@@ -85,7 +85,7 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
                 for (var tmpIcon : nbt.getList("Icons", NbtElement.COMPOUND_TYPE)) {
                     var icon = (NbtCompound) tmpIcon;
                     image.createIcon(
-                            lookup.getWrapperOrThrow(RegistryKeys.MAP_DECORATION_TYPE)
+                            lookup.getOrThrow(RegistryKeys.MAP_DECORATION_TYPE)
                                     .getOptional(RegistryKey.of(RegistryKeys.MAP_DECORATION_TYPE, Identifier.of(icon.getString("TypeId"))))
                                     .map(x -> (RegistryEntry<MapDecorationType>) x)
                                     .orElse(MapDecorationTypes.PLAYER),

@@ -7,8 +7,8 @@ import net.minecraft.util.math.MathHelper;
 // https://bottosson.github.io/posts/oklab/
 public record OkLab(float l, float a, float b) {
     public static OkLab fromRgb(int rgb) {
-        return fromLinearSRGB(ColorHelper.Argb.getRed(rgb) / 255f, ColorHelper.Argb.getGreen(rgb) / 255f,
-                ColorHelper.Argb.getBlue(rgb) / 255f);
+        return fromLinearSRGB(ColorHelper.getRed(rgb) / 255f, ColorHelper.getGreen(rgb) / 255f,
+                ColorHelper.getBlue(rgb) / 255f);
     }
 
     static float f(float x) {
