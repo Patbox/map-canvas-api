@@ -76,8 +76,8 @@ public class TestMod implements ModInitializer {
 
     private int testWorld(CommandContext<ServerCommandSource> ctx) {
         try {
-            var dirVert = Direction.byId(IntegerArgumentType.getInteger(ctx, "dirVert"));
-            var dirHor = Direction.byId(IntegerArgumentType.getInteger(ctx, "dirHor"));
+            var dirVert = Direction.byIndex(IntegerArgumentType.getInteger(ctx, "dirVert"));
+            var dirHor = Direction.byIndex(IntegerArgumentType.getInteger(ctx, "dirHor"));
 
             var canvas = MinecraftWorldCanvas.of(ctx.getSource().getWorld(), BlockPos.ofFloored(ctx.getSource().getPosition()), dirVert, dirHor);
 
@@ -110,7 +110,7 @@ public class TestMod implements ModInitializer {
                 });
             };
 
-            this.display = VirtualDisplay.builder(this.canvas, BlockPos.ofFloored(ctx.getSource().getPosition()), Direction.byId(dir))
+            this.display = VirtualDisplay.builder(this.canvas, BlockPos.ofFloored(ctx.getSource().getPosition()), Direction.byIndex(dir))
                     .rotation(rot).raycast().invisible().glowing().callback(callback).build();
             for (var player : ctx.getSource().getServer().getPlayerManager().getPlayerList()) {
                 this.display.addPlayer(player);

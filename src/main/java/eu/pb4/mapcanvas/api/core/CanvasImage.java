@@ -1,11 +1,19 @@
 package eu.pb4.mapcanvas.api.core;
 
+import com.mojang.datafixers.DataFix;
+import com.mojang.datafixers.DataFixer;
+import com.mojang.datafixers.DataFixerUpper;
+import com.mojang.serialization.Dynamic;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
+import net.minecraft.SharedConstants;
+import net.minecraft.datafixer.Schemas;
+import net.minecraft.datafixer.TypeReferences;
 import net.minecraft.item.map.MapDecorationType;
 import net.minecraft.item.map.MapDecorationTypes;
 import net.minecraft.item.map.MapState;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.RegistryWrapper;
@@ -74,34 +82,44 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
     @Nullable
     public static CanvasImage from(NbtCompound nbt, RegistryWrapper.WrapperLookup lookup) {
         try {
-            if (nbt.getString("DataType").equals("MapCanvasImage") && nbt.getInt("Version") != 0) {
-                final int width = nbt.getInt("Width");
-                final int height = nbt.getInt("Height");
+            if (nbt.getString("DataType", "").equals("MapCanvasImage") && nbt.getInt("Version", 0) != 0) {
+                final int width = nbt.getInt("Width", 0);
+                final int height = nbt.getInt("Height", 0);
 
-                var data = nbt.getByteArray("Data");
+                var data = nbt.getByteArray("Data").orElse(new byte[0]);
 
                 var image = new CanvasImage(width, height, Arrays.copyOf(data, data.length));
 
-                for (var tmpIcon : nbt.getList("Icons", NbtElement.COMPOUND_TYPE)) {
-                    var icon = (NbtCompound) tmpIcon;
-                    image.createIcon(
-                            lookup.getOrThrow(RegistryKeys.MAP_DECORATION_TYPE)
-                                    .getOptional(RegistryKey.of(RegistryKeys.MAP_DECORATION_TYPE, Identifier.of(icon.getString("TypeId"))))
-                                    .map(x -> (RegistryEntry<MapDecorationType>) x)
-                                    .orElse(MapDecorationTypes.PLAYER),
-                            icon.getBoolean("Vis"),
-                            icon.getInt("X"),
-                            icon.getInt("Y"),
-                            icon.getByte("Rot"),
-                            icon.contains("Text", NbtElement.STRING_TYPE)
-                                    ? Text.Serialization.fromJson(icon.getString("Text"), lookup)
-                                    : null
-                    );
+                for (var tmpIcon : nbt.getListOrEmpty("Icons")) {
+                    if (tmpIcon instanceof NbtCompound icon) {
+                        image.createIcon(
+                                lookup.getOrThrow(RegistryKeys.MAP_DECORATION_TYPE)
+                                        .getOptional(RegistryKey.of(RegistryKeys.MAP_DECORATION_TYPE, Identifier.of(icon.getString("TypeId", ""))))
+                                        .map(x -> (RegistryEntry<MapDecorationType>) x)
+                                        .orElse(MapDecorationTypes.PLAYER),
+                                icon.getBoolean("Vis", false),
+                                icon.getInt("X", 0),
+                                icon.getInt("Y", 0),
+                                icon.getByte("Rot", (byte) 0),
+                                icon.contains("Text")
+                                        ? Text.Serialization.fromJson(icon.getString("Text", ""), lookup)
+                                        : null
+                        );
+                    }
                 }
 
                 return image;
-            } else if (nbt.contains("DataVersion", NbtElement.INT_TYPE) && nbt.contains("data", NbtElement.COMPOUND_TYPE)) {
-                return from(MapState.fromNbt(nbt, lookup));
+            } else if (nbt.contains("DataVersion") && nbt.contains("data")) {
+                var version = nbt.getInt("DataVersion", 1343);
+                if (SharedConstants.WORLD_VERSION > version) {
+                    try {
+                        nbt = (NbtCompound) Schemas.getFixer().update(TypeReferences.SAVED_DATA_MAP_DATA, new Dynamic<>(NbtOps.INSTANCE, nbt), version, SharedConstants.WORLD_VERSION).getValue();
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                return from(MapState.CODEC.decode(lookup.getOps(NbtOps.INSTANCE), nbt).getOrThrow().getFirst());
             }
         } catch (Exception e) {
             e.printStackTrace();

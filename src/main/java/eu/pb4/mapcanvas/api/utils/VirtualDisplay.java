@@ -196,7 +196,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
                     var spawnPacket = new EntitySpawnS2CPacket(entityId, uuid,
                             vec.x, vec.y, vec.z, 0f, 0f,
                             EntityType.INTERACTION,
-                            direction.getId(), Vec3d.ZERO, 0);
+                            direction.getIndex(), Vec3d.ZERO, 0);
 
 
                     var trackerPacket = new EntityTrackerUpdateS2CPacket(entityId, List.of(
@@ -246,7 +246,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
                 var spawnPacket = new EntitySpawnS2CPacket(entityId, uuid,
                         vec.x, vec.y, vec.z, 0f, 0f,
                         EntityType.INTERACTION,
-                        direction.getId(), Vec3d.ZERO, 0);
+                        direction.getIndex(), Vec3d.ZERO, 0);
 
 
                 var trackerPacket = new EntityTrackerUpdateS2CPacket(entityId, List.of(
@@ -591,7 +591,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
             var spawnPacket = new EntitySpawnS2CPacket(entityId, uuid,
                     pos.getX() + x, pos.getY() + y, pos.getZ() + z, 0f, 0f,
                     glowing ? EntityType.GLOW_ITEM_FRAME : EntityType.ITEM_FRAME,
-                    direction.getId(), Vec3d.ZERO, 0);
+                    direction.getIndex(), Vec3d.ZERO, 0);
 
 
             var trackerPacket = new EntityTrackerUpdateS2CPacket(entityId, List.of(

@@ -10,7 +10,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.ClickType;
 
 public class ClientRenderer implements ActiveRenderer {
-    private static NativeImage source = null;
+    private NativeImage source = null;
 
     @Override
     public void setup(PlayerCanvas canvas) {
@@ -20,12 +20,13 @@ public class ClientRenderer implements ActiveRenderer {
     @Override
     public void render(PlayerCanvas outputCanvas, DrawableCanvas canvas, long time, int displayFps, int frame) {
         MinecraftClient.getInstance().execute(() -> {
-            var oldImage = this.source;
-            this.source = ScreenshotRecorder.takeScreenshot(MinecraftClient.getInstance().getFramebuffer());
-
-            if (oldImage != null) {
-               oldImage.close();
-            }
+           ScreenshotRecorder.takeScreenshot(MinecraftClient.getInstance().getFramebuffer(), nativeImage -> {
+               var oldImage = this.source;
+               this.source = nativeImage;
+               if (oldImage != null) {
+                    oldImage.close();
+                }
+            });
         });
 
         if (this.source != null) {
