@@ -99,7 +99,7 @@ public class VanillaFontReader {
                                             int realWidth = 0;
                                             for (int xd = 0; xd < charWidth; xd++) {
                                                 for (int yd = 0; yd < charHeight; yd++) {
-                                                    if ((texture.getRGB(x * charWidth + xd, y * charHeight + yd) >> 24 & 0xFF) > 64) {
+                                                    if ((texture.getRGB(x * charWidth + xd, y * charHeight + yd) >> 24 & 0xFF) > 0) {
                                                         glyphTexture[xd + yd * charWidth] = true;
                                                         realWidth = Math.max(realWidth, xd);
                                                     }
