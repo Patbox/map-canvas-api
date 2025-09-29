@@ -6,8 +6,8 @@ import eu.pb4.mapcanvas.api.core.PlayerCanvas;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.api.font.DefaultFonts;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
+import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import eu.pb4.placeholders.api.ParserContext;
-import eu.pb4.placeholders.api.TextParserUtils;
 import eu.pb4.placeholders.api.parsers.TagParser;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
@@ -79,12 +79,12 @@ public class FontTestRenderer implements ActiveRenderer {
     }
 
     @Override
-    public void onClick(ServerPlayerEntity player, ClickType type, int x, int y) {
+    public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {
 
     }
 
     @Override
-    public void onInput(String input) {
+    public void onInput(ServerPlayerEntity player, String input) {
         this.userText = TagParser.QUICK_TEXT.parseText(input, ParserContext.of());
     }
 

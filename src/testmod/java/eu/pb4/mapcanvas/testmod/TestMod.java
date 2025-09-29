@@ -12,7 +12,6 @@ import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import eu.pb4.mapcanvas.impl.font.BitmapFont;
 import eu.pb4.mapcanvas.impl.font.LazyFont;
-import eu.pb4.mapcanvas.impl.font.serialization.UniHexFontReader;
 import eu.pb4.mapcanvas.impl.font.serialization.RawBitmapFontSerializer;
 import eu.pb4.mapcanvas.testmod.advancedgui.*;
 import eu.pb4.polymer.common.api.PolymerCommonUtils;
@@ -33,7 +32,6 @@ import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import org.apache.commons.io.FileUtils;
-import org.openjdk.jol.info.ClassLayout;
 import org.openjdk.jol.vm.VM;
 
 import javax.imageio.ImageIO;
@@ -100,7 +98,7 @@ public class TestMod implements ModInitializer {
             }
             System.out.println(dir);
 
-            VirtualDisplay.TypedInteractionCallback callback = (player, type, x, y) -> {
+            VirtualDisplay.DisplayInteractionCallback callback = (player, type, x, y) -> {
                 this.runPreRender.add(() -> {
                     if (x >= canvas.getWidth() - 32 && y < 32) {
                         this.setCurrentRenderer(this.menuRenderer);
@@ -111,7 +109,7 @@ public class TestMod implements ModInitializer {
             };
 
             this.display = VirtualDisplay.builder(this.canvas, BlockPos.ofFloored(ctx.getSource().getPosition()), Direction.byIndex(dir))
-                    .rotation(rot).raycast().invisible().glowing().callback(callback).build();
+                    .rotation(rot).raycast().invisible().glowing().interactionCallback(callback).build();
             for (var player : ctx.getSource().getServer().getPlayerManager().getPlayerList()) {
                 this.display.addPlayer(player);
             }
@@ -145,7 +143,7 @@ public class TestMod implements ModInitializer {
                     literal("input").then(
                             argument("input", StringArgumentType.greedyString())
                                     .executes((ctx) -> {
-                                        this.currentRenderer.onInput(StringArgumentType.getString(ctx, "input"));
+                                        this.currentRenderer.onInput(ctx.getSource().getPlayerOrThrow(), StringArgumentType.getString(ctx, "input"));
                                         return 0;
                                     })
 

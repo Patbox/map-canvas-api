@@ -3,15 +3,13 @@ package eu.pb4.mapcanvas.testmod.advancedgui;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.api.core.PlayerCanvas;
-import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.api.font.DefaultFonts;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
+import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import eu.pb4.placeholders.api.ParserContext;
-import eu.pb4.placeholders.api.TextParserUtils;
 import eu.pb4.placeholders.api.parsers.TagParser;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.util.ClickType;
 import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
@@ -80,16 +78,18 @@ public class BuiltinFontTestRenderer implements ActiveRenderer {
         font.drawText(canvas, "Zażółć gęślą jaźń", 16, i, 16, CanvasColor.BLACK_HIGH);
         i += 16 + 4;
 
-        DefaultFonts.REGISTRY.drawText(canvas, this.userText, 16, i, 16, CanvasColor.BLACK_HIGH);
+        DefaultFonts.REGISTRY.drawText(canvas, this.userText, 16, i, 32, CanvasColor.BLACK_HIGH, CanvasColor.CLEAR_FORCE, 2);
     }
 
     @Override
-    public void onClick(ServerPlayerEntity player, ClickType type, int x, int y) {
+    public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {
 
     }
 
     @Override
-    public void onInput(String input) {
+    public void onInput(ServerPlayerEntity player, String input) {
         this.userText = TagParser.QUICK_TEXT.parseText(input, ParserContext.of());
+        player.sendMessage(this.userText);
+
     }
 }

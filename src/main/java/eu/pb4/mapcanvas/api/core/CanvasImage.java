@@ -1,9 +1,11 @@
 package eu.pb4.mapcanvas.api.core;
 
+import com.google.gson.JsonParser;
 import com.mojang.datafixers.DataFix;
 import com.mojang.datafixers.DataFixer;
 import com.mojang.datafixers.DataFixerUpper;
 import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.JsonOps;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import net.minecraft.SharedConstants;
 import net.minecraft.datafixer.Schemas;
@@ -19,6 +21,7 @@ import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,7 +105,7 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
                                 icon.getInt("Y", 0),
                                 icon.getByte("Rot", (byte) 0),
                                 icon.contains("Text")
-                                        ? Text.Serialization.fromJson(icon.getString("Text", ""), lookup)
+                                        ? TextCodecs.CODEC.decode(lookup.getOps(JsonOps.INSTANCE), JsonParser.parseString(icon.getString("Text", ""))).result().orElseThrow().getFirst()
                                         : null
                         );
                     }

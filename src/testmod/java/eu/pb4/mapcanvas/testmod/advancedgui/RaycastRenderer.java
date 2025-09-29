@@ -5,6 +5,7 @@ import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.api.core.PlayerCanvas;
 import eu.pb4.mapcanvas.api.font.DefaultFonts;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
+import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.MapColor;
 import net.minecraft.block.PillarBlock;
@@ -54,7 +55,7 @@ public class RaycastRenderer implements ActiveRenderer {
             return;
         }
 
-        final int pixelSize = 2;
+        final int pixelSize = 4;
 
         int width = canvas.getWidth() / pixelSize;
         int height = canvas.getHeight() / pixelSize;
@@ -67,9 +68,9 @@ public class RaycastRenderer implements ActiveRenderer {
 
         var pos = new Vec3d(this.entity.getX(), this.entity.getY() + this.entity.getStandingEyeHeight(), this.entity.getZ());
 
-        var world =  this.entity.getWorld();
+        var world =  this.entity.getEntityWorld();
         for (var x = 0; x < width; x++) {
-            float yawAngle = (float) -Math.toRadians(yaw + (x - halfWidth) / 4 * pixelSize);
+            float yawAngle = -(yaw + (x - halfWidth) / 4f * pixelSize) * MathHelper.RADIANS_PER_DEGREE;
             float yawCos = MathHelper.cos(yawAngle);
             float yawSin = MathHelper.sin(yawAngle);
 
@@ -77,7 +78,7 @@ public class RaycastRenderer implements ActiveRenderer {
 
                 Vec3d max;
                 {
-                    float pitchAngle = (pitch + (y - halfHeight) / 4 * pixelSize) * 0.017453292F;
+                    float pitchAngle = (pitch + (y - halfHeight) / 4f * pixelSize) * MathHelper.RADIANS_PER_DEGREE;
                     float pitchCos = MathHelper.cos(pitchAngle);
                     float pitchSin = MathHelper.sin(pitchAngle);
 
@@ -104,7 +105,7 @@ public class RaycastRenderer implements ActiveRenderer {
                 int pY = y * pixelSize;
 
                 if (cast != null) {
-                    var state = this.entity.getWorld().getBlockState(cast.getBlockPos());
+                    var state = this.entity.getEntityWorld().getBlockState(cast.getBlockPos());
 
                     if (state.getBlock() instanceof PillarBlock) {
                         state = switch (state.get(PillarBlock.AXIS)) {
@@ -126,7 +127,7 @@ public class RaycastRenderer implements ActiveRenderer {
                         };
                     }
 
-                    var mapColor = state.getMapColor(this.entity.getWorld(), cast.getBlockPos());
+                    var mapColor = state.getMapColor(this.entity.getEntityWorld(), cast.getBlockPos());
                     if (mapColor == MapColor.CLEAR) {
                         mapColor = MapColor.WHITE_GRAY;
                     }
@@ -175,7 +176,7 @@ public class RaycastRenderer implements ActiveRenderer {
     }
 
     @Override
-    public void onClick(ServerPlayerEntity player, ClickType type, int x, int y) {
+    public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {
 
     }
 }

@@ -3,8 +3,10 @@ package eu.pb4.mapcanvas.testmod.advancedgui;
 import eu.pb4.mapcanvas.api.core.*;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.api.font.DefaultFonts;
+import eu.pb4.mapcanvas.api.font.FontRegistry;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.utils.ViewUtils;
+import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import net.minecraft.block.MapColor;
 import net.minecraft.item.DyeItem;
 import net.minecraft.item.Items;
@@ -119,8 +121,8 @@ public class TaterDemoRenderer implements ActiveRenderer {
     }
 
     @Override
-    public void onClick(ServerPlayerEntity player, ClickType type, int x, int y) {
-        if (type == ClickType.RIGHT) {
+    public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {
+        if (type.isRight()) {
             var stack = player.getMainHandStack();
             if (stack.isEmpty()) {
                 return;

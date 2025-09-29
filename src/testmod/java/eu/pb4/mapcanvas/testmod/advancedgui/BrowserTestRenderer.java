@@ -6,8 +6,8 @@ import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.api.core.PlayerCanvas;
 import eu.pb4.mapcanvas.api.font.DefaultFonts;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
+import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.ClickType;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -48,11 +48,11 @@ public class BrowserTestRenderer implements ActiveRenderer {
     }
 
     @Override
-    public void onClick(ServerPlayerEntity player, ClickType type, int x, int y) {
+    public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {
         try {
             var mouse = new PointerInput(PointerInput.Kind.MOUSE, "default mouse");
 
-            var button = type == ClickType.LEFT ? PointerInput.MouseButton.LEFT.asArg() : PointerInput.MouseButton.RIGHT.asArg();
+            var button = type.isLeft() ? PointerInput.MouseButton.LEFT.asArg() : PointerInput.MouseButton.RIGHT.asArg();
 
             var actions = new Sequence(mouse, 0)
                     .addAction(mouse.createPointerMove(Duration.ZERO, PointerInput.Origin.viewport(), x, y - 32))
@@ -64,14 +64,14 @@ public class BrowserTestRenderer implements ActiveRenderer {
 
             this.x = x;
             this.y = y;
-            this.lastClick = type == ClickType.LEFT;
+            this.lastClick = type.isLeft();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public void onInput(String input) {
+    public void onInput(ServerPlayerEntity player, String input) {
         new Actions(this.driver).sendKeys(input).perform();
     }
 

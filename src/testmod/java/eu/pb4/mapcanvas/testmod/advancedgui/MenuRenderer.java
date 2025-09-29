@@ -6,6 +6,7 @@ import eu.pb4.mapcanvas.api.core.PlayerCanvas;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.api.font.DefaultFonts;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
+import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import eu.pb4.mapcanvas.impl.font.serialization.UniHexFontReader;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -45,7 +46,7 @@ public class MenuRenderer implements ActiveRenderer {
         CanvasUtils.clear(canvas, CanvasColor.WHITE_NORMAL);
         var renderHeight = canvas.getHeight() + 15;
         var i = 0;
-        var font = (frame * 2 / Math.max(displayFps, 1)) % 2 == 0 ? this.font : DefaultFonts.VANILLA;
+        var font = /*(frame * 2 / Math.max(displayFps, 1)) % 2 == 0 ? this.font :*/ DefaultFonts.VANILLA;
         for (var pair : this.renderers) {
             int y = 16 + i * 20 - this.scroll;
             if (y > -15 && y < renderHeight) {
@@ -56,7 +57,7 @@ public class MenuRenderer implements ActiveRenderer {
     }
 
     @Override
-    public void onClick(ServerPlayerEntity player, ClickType type, int x, int y) {
+    public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {
         var index = (y + this.scroll - 16) / 20;
 
         if (index >= 0 && index < this.renderers.size() ) {

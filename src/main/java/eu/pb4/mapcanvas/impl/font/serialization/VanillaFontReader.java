@@ -1,11 +1,13 @@
 package eu.pb4.mapcanvas.impl.font.serialization;
 
 import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.impl.font.BitmapFont;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +31,7 @@ public class VanillaFontReader {
                 var json = JsonParser.parseString(new String(stream.readAllBytes()));
                 stream.close();
 
-                lines.add(Text.Serialization.fromJsonTree(json.getAsJsonObject().get("pack").getAsJsonObject().get("description"), DynamicRegistryManager.of(Registries.REGISTRIES)).getString());
+                lines.add(TextCodecs.CODEC.decode(JsonOps.INSTANCE, json.getAsJsonObject().get("pack").getAsJsonObject().get("description")).result().orElseThrow().getFirst().getString());
             } catch (Exception e) {
 
             }
@@ -99,8 +101,10 @@ public class VanillaFontReader {
                                             int realWidth = 0;
                                             for (int xd = 0; xd < charWidth; xd++) {
                                                 for (int yd = 0; yd < charHeight; yd++) {
-                                                    if ((texture.getRGB(x * charWidth + xd, y * charHeight + yd) >> 24 & 0xFF) > 64) {
-                                                        glyphTexture[xd + yd * charWidth] = true;
+                                                    var alpha = texture.getRGB(x * charWidth + xd, y * charHeight + yd) >> 24 & 0xFF;
+                                                    glyphTexture[xd + yd * charWidth] = alpha > 64;
+
+                                                    if (alpha != 0) {
                                                         realWidth = Math.max(realWidth, xd);
                                                     }
                                                 }

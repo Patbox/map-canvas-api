@@ -5,7 +5,6 @@ import eu.pb4.mapcanvas.api.core.PlayerCanvas;
 import eu.pb4.mapcanvas.impl.MapIdManager;
 import eu.pb4.mapcanvas.impl.PlayerInterface;
 import eu.pb4.mapcanvas.mixin.EntityAccessor;
-import eu.pb4.mapcanvas.mixin.InteractionEntityAccessor;
 import eu.pb4.mapcanvas.mixin.ItemFrameEntityAccessor;
 import eu.pb4.mapcanvas.mixin.PlayerInteractEntityC2SPacketAccessor;
 import io.netty.util.internal.shaded.org.jctools.util.UnsafeAccess;
@@ -13,7 +12,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.network.listener.ClientPlayPacketListener;
@@ -24,9 +22,7 @@ import net.minecraft.network.packet.s2c.play.EntitiesDestroyS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityTrackerUpdateS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
 import net.minecraft.util.BlockRotation;
-import net.minecraft.util.ClickType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -45,14 +41,14 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
     private final BlockPos pos;
     private final Direction direction;
     private final int rotation;
-    private final TypedInteractionCallback interactionCallback;
+    private final DisplayInteractionCallback interactionCallback;
     private final Set<ServerPlayerEntity> players = new HashSet<>();
     private final boolean invisible;
     private final ClickDetection clickDetection;
     private final IntList clickableIds = new IntArrayList();
     private Box box;
 
-    protected VirtualDisplay(BlockPos pos, boolean glowing, Direction direction, int rotation, boolean invisible, ClickDetection clickDetection, TypedInteractionCallback callback) {
+    protected VirtualDisplay(BlockPos pos, boolean glowing, Direction direction, int rotation, boolean invisible, ClickDetection clickDetection, DisplayInteractionCallback callback) {
         this.glowing = glowing;
         this.pos = pos;
         this.direction = direction;
@@ -62,7 +58,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         this.clickDetection = clickDetection;
     }
 
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static Builder builder() {
         return new Builder();
     }
@@ -80,12 +76,12 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         }
     }
 
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static VirtualDisplay of(PlayerCanvas canvas, BlockPos pos, Direction direction, int rotation, boolean glowing) {
         return of(canvas, pos, direction, rotation, glowing, null);
     }
 
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static VirtualDisplay of(PlayerCanvas canvas, BlockPos pos, Direction direction, int rotation, boolean glowing, @Nullable TypedInteractionCallback callback) {
         if (canvas instanceof CombinedPlayerCanvas combinedCanvas) {
             return new Combined(combinedCanvas, pos, glowing, direction, Math.abs(rotation % 4), true, callback != null ? ClickDetection.ENTITY : ClickDetection.NONE, callback);
@@ -94,7 +90,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         }
     }
 
-    @Deprecated
+    @Deprecated(forRemoval = true)
     public static VirtualDisplay of(PlayerCanvas canvas, BlockPos pos, Direction direction, int rotation, boolean glowing, @Nullable InteractionCallback callback) {
         return of(canvas, pos, direction, rotation, glowing, (TypedInteractionCallback) callback);
     }
@@ -162,109 +158,10 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
 
     protected void createInteractions() {
         this.box = null;
-        if (this.direction.getAxis() == Direction.Axis.Y) {
-            //var d = 0.0625 / 2;
-            var entityHeight = 0.0626f;
-
-            double x = this.pos.getX() + 0.5D;
-            var y = this.pos.getY();
-            double z = this.pos.getZ() + 0.5D;
-            var width = ((this.rotation == 1 || this.rotation == 3) ? this.getHeight() : this.getWidth());
-            var height = ((this.rotation == 1 || this.rotation == 3) ? this.getWidth() : this.getHeight());
-
-            if (this.rotation == 1) {
-                x -= width - 1;
-                if (this.direction == Direction.DOWN) {
-                    z -= height - 1;
-                }
-            } else if (this.rotation == 2) {
-                x -= width - 1;
-                if (this.direction == Direction.UP) {
-                    z -= height - 1;
-                }
-            } else if ((this.rotation == 3 && this.direction == Direction.UP) || (this.rotation == 0 && this.direction == Direction.DOWN)) {
-                z -= height - 1;
-            }
-
-            var baseVec = new Vec3d(x, y - entityHeight + (this.direction == Direction.DOWN ? 1 : entityHeight), z);
-            for (int xi = 0; xi < width; xi++) {
-                for (int yi = 0; yi < height; yi++) {
-                    var entityId = MapIdManager.requestEntityId();
-                    var uuid = UUID.randomUUID();
-                    var vec = baseVec.offset(Direction.SOUTH, yi).offset(Direction.EAST, xi);
-
-                    var spawnPacket = new EntitySpawnS2CPacket(entityId, uuid,
-                            vec.x, vec.y, vec.z, 0f, 0f,
-                            EntityType.INTERACTION,
-                            direction.getIndex(), Vec3d.ZERO, 0);
-
-
-                    var trackerPacket = new EntityTrackerUpdateS2CPacket(entityId, List.of(
-                            DataTracker.SerializedEntry.of(InteractionEntityAccessor.getHEIGHT(), entityHeight),
-                            DataTracker.SerializedEntry.of(InteractionEntityAccessor.getWIDTH(), 1f),
-                            DataTracker.SerializedEntry.of(EntityAccessor.getFlags(), (byte) (1 << 5))
-                    ));
-
-                    float f = 0.5f;
-                    var box = new Box(vec.x - (double)f, vec.y, vec.z - (double)f, vec.x + (double)f, vec.y + (double)entityHeight, vec.z + (double)f);
-
-                    var holder = new Holder(entityId, xi * 128, yi * 128, vec, box, uuid, spawnPacket, trackerPacket);
-                    this.holders.add(holder);
-                    this.clickableIds.add(entityId);
-                    this.clickableHolderById.put(holder.entityId, holder);
-                    this.ids.add(entityId);
-                }
-            }
-        } else {
-            var d = 0.0625 / 2;
-            var count = ((this.rotation == 1 || this.rotation == 3) ? this.getHeight() : this.getWidth()) / 0.0625;
-            var height = ((this.rotation == 1 || this.rotation == 3) ? this.getWidth() : this.getHeight());
-
-            var dir = this.direction.rotateYCounterclockwise();
-            double x = (double) this.pos.getX() + 0.5D - (double) this.direction.getOffsetX() * 0.46875D - dir.getOffsetX() * 0.5;
-            var y = this.pos.getY();
-            double z = (double) this.pos.getZ() + 0.5D - (double) this.direction.getOffsetZ() * 0.46875D - dir.getOffsetZ() * 0.5;
-
-            if (this.rotation == 1) {
-                x -= dir.getOffsetX() * (this.getHeight() - 1);
-                z -= dir.getOffsetZ() * (this.getHeight() - 1);
-            } else if (this.rotation == 2) {
-                x -= dir.getOffsetX() * (this.getWidth() - 1);
-                y += height - 1;
-                z -= dir.getOffsetZ() * (this.getWidth() - 1);
-            } else if (this.rotation == 3) {
-                y += height - 1;
-            }
-
-            var baseVec = new Vec3d(x, y - height + 1, z);
-            for (int i = 0; i < count; i++) {
-                var entityId = MapIdManager.requestEntityId();
-                var uuid = UUID.randomUUID();
-                var vec = baseVec
-                        .offset(dir, d + i * 0.0625);
-
-                var spawnPacket = new EntitySpawnS2CPacket(entityId, uuid,
-                        vec.x, vec.y, vec.z, 0f, 0f,
-                        EntityType.INTERACTION,
-                        direction.getIndex(), Vec3d.ZERO, 0);
-
-
-                var trackerPacket = new EntityTrackerUpdateS2CPacket(entityId, List.of(
-                        DataTracker.SerializedEntry.of(InteractionEntityAccessor.getHEIGHT(), (float) height),
-                        DataTracker.SerializedEntry.of(InteractionEntityAccessor.getWIDTH(), 0.0626f),
-                        DataTracker.SerializedEntry.of(EntityAccessor.getFlags(), (byte) (1 << 5))
-                ));
-
-                float f = 0.0626f / 2;
-                var box = new Box(vec.x - (double)f, vec.y, vec.z - (double)f, vec.x + (double)f, vec.y + (double)height, vec.z + (double)f);
-
-                var holder = new Holder(entityId, i * 8, 0, vec, box, uuid, spawnPacket, trackerPacket);
-                this.holders.add(holder);
-                this.clickableIds.add(entityId);
-                this.clickableHolderById.put(holder.entityId, holder);
-                this.ids.add(entityId);
-            }
-        }
+        this.clickableIds.clear();
+        this.clickableHolderById.clear();
+        this.clickableHolderById.putAll(this.holderById);
+        this.clickableIds.addAll(this.clickableHolderById.keySet());
     }
 
     public abstract int getHeight();
@@ -274,7 +171,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
     public abstract PlayerCanvas getCanvas();
 
     @ApiStatus.Internal
-    public final void interactAt(ServerPlayerEntity player, int id, @Nullable Vec3d pos, Hand hand, boolean isAttack) {
+    public final void interactAt(ServerPlayerEntity player, int id, @Nullable Vec3d pos, Hand hand, ClickType type) {
         if (this.interactionCallback != null && hand == Hand.MAIN_HAND) {
             var holder = this.clickableHolderById.get(id);
 
@@ -283,7 +180,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
             }
 
             if (this.clickDetection == ClickDetection.RAYCAST) {
-                var maxDistance = 9;
+                var maxDistance = player.getEntityInteractionRange();
                 var maxDistanceSqr = maxDistance*maxDistance;
                 Vec3d min = player.getCameraPosVec(0);
                 Vec3d rotVec = player.getRotationVec(1.0F);
@@ -331,7 +228,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
                 if (this.direction.getAxis() != Direction.Axis.Y) {
                     var dir = this.direction.rotateYCounterclockwise();
                     x = (int) ((pos.x * dir.getOffsetX() + pos.z * dir.getOffsetZ()) * 128) + width * 64;
-                    y = (int) ((-pos.y) * 128) + height * 64;;
+                    y = (int) ((-pos.y) * 128) + height * 64;
                 } else {
                     x = (int) ((pos.x) * 128) + width * 64;
                     y = (int) ((pos.z) * 128) + height * 64;
@@ -355,29 +252,8 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
                 x = height * 128 - tmp;
             }
 
-            this.interactionCallback.onClick(player, isAttack ? ClickType.LEFT : ClickType.RIGHT, x, y);
+            this.interactionCallback.onClick(player, type, x, y);
         }
-    }
-
-    @ApiStatus.Internal
-    public final void handleInteractionPacket(PlayerInteractEntityC2SPacket packet, ServerPlayerEntity player) {
-        var id = ((PlayerInteractEntityC2SPacketAccessor) packet).getEntityId();
-
-        packet.handle(new PlayerInteractEntityC2SPacket.Handler() {
-            @Override
-            public void interact(Hand hand) {
-            }
-
-            @Override
-            public void interactAt(Hand hand, Vec3d pos) {
-                VirtualDisplay.this.interactAt(player, id, pos, hand, false);
-            }
-
-            @Override
-            public void attack() {
-                VirtualDisplay.this.interactAt(player, id, null, Hand.MAIN_HAND, true);
-            }
-        });
     }
 
     protected enum ClickDetection {
@@ -386,11 +262,21 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         RAYCAST
     }
 
-    public interface TypedInteractionCallback {
+    public interface DisplayInteractionCallback {
         void onClick(ServerPlayerEntity player, ClickType type, int x, int y);
     }
 
-    @Deprecated
+    @Deprecated(forRemoval = true)
+    public interface TypedInteractionCallback extends DisplayInteractionCallback {
+        void onClick(ServerPlayerEntity player, net.minecraft.util.ClickType type, int x, int y);
+
+        @Override
+        default void onClick(ServerPlayerEntity player, ClickType type, int x, int y) {
+            this.onClick(player, type == ClickType.RIGHT ? net.minecraft.util.ClickType.RIGHT : net.minecraft.util.ClickType.LEFT, x, y);
+        }
+    }
+
+    @Deprecated(forRemoval = true)
     public interface InteractionCallback extends TypedInteractionCallback {
         void onClick(ServerPlayerEntity player, int x, int y);
 
@@ -410,7 +296,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         private boolean invisible;
         private int rotation = 0;
         private ClickDetection clickDetection = ClickDetection.NONE;
-        private TypedInteractionCallback callback;
+        private DisplayInteractionCallback callback;
 
         private Builder() {
         }
@@ -460,12 +346,30 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
             return this;
         }
 
+        public Builder raycastClickDetection() {
+            this.clickDetection = ClickDetection.RAYCAST;
+            return this;
+        }
+
+        public Builder entityClickDetection() {
+            this.clickDetection = ClickDetection.ENTITY;
+            return this;
+        }
+
         public Builder type(boolean invisible, boolean glowing) {
             this.invisible = invisible;
             this.glowing = glowing;
             return this;
         }
+        public Builder interactionCallback(DisplayInteractionCallback callback) {
+            this.callback = callback;
+            if (this.clickDetection == ClickDetection.NONE) {
+                this.clickDetection = ClickDetection.RAYCAST;
+            }
+            return this;
+        }
 
+        @Deprecated(forRemoval = true)
         public Builder callback(TypedInteractionCallback callback) {
             this.callback = callback;
             if (this.clickDetection == ClickDetection.NONE) {
@@ -486,7 +390,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
     protected static final class Single extends VirtualDisplay {
         private final PlayerCanvas canvas;
 
-        private Single(PlayerCanvas canvas, BlockPos pos, boolean glowing, Direction direction, int rotation, boolean invisible, ClickDetection clickDetection, TypedInteractionCallback callback) {
+        private Single(PlayerCanvas canvas, BlockPos pos, boolean glowing, Direction direction, int rotation, boolean invisible, ClickDetection clickDetection, DisplayInteractionCallback callback) {
             super(pos, glowing, direction, rotation, invisible, clickDetection, callback);
             this.canvas = canvas;
             this.addHolder(this.canvas, 0, 0);
@@ -516,7 +420,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         private final int height;
         private final CombinedPlayerCanvas canvas;
 
-        private Combined(CombinedPlayerCanvas canvas, BlockPos pos, boolean glowing, Direction direction, int rotation, boolean invisible, ClickDetection clickDetection, TypedInteractionCallback callback) {
+        private Combined(CombinedPlayerCanvas canvas, BlockPos pos, boolean glowing, Direction direction, int rotation, boolean invisible, ClickDetection clickDetection, DisplayInteractionCallback callback) {
             super(pos, glowing, direction, rotation, invisible, clickDetection, callback);
             this.width = canvas.getSectionsWidth();
             this.height = canvas.getSectionsHeight();
@@ -588,8 +492,10 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
 
             var entityId = MapIdManager.requestEntityId();
             var uuid = UUID.randomUUID();
+            var entPos = Vec3d.ofCenter(pos).add(x, y, z);
+
             var spawnPacket = new EntitySpawnS2CPacket(entityId, uuid,
-                    pos.getX() + x, pos.getY() + y, pos.getZ() + z, 0f, 0f,
+                    entPos.getX(), entPos.getY(), entPos.getZ(), 0f, 0f,
                     glowing ? EntityType.GLOW_ITEM_FRAME : EntityType.ITEM_FRAME,
                     direction.getIndex(), Vec3d.ZERO, 0);
 
@@ -600,7 +506,33 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
                     DataTracker.SerializedEntry.of(EntityAccessor.getFlags(), (byte) ((visible ? 1 : 0) << 5))
             ));
 
-            return new Holder(entityId, finalXOffset, finalYOffset, Vec3d.ZERO, Box.from(Vec3d.ZERO), UUID.randomUUID(), spawnPacket, trackerPacket);
+            Vec3d boxCenter = entPos.offset(direction, -0.46875);
+            var axis = direction.getAxis();
+            var dx = axis == Direction.Axis.X ? 0.0625 : 1;
+            var dy = axis == Direction.Axis.Y ? 0.0625 : 1;
+            var dz = axis == Direction.Axis.Z ? 0.0625 : 1;
+
+            return new Holder(entityId, finalXOffset, finalYOffset, entPos, Box.of(boxCenter, dx, dy, dz), UUID.randomUUID(), spawnPacket, trackerPacket);
+        }
+    }
+
+    public enum ClickType {
+        LEFT,
+        RIGHT,
+        MIDDLE,
+        MIDDLE_CTRL;
+
+
+        public boolean isLeft() {
+            return this == LEFT;
+        }
+
+        public boolean isRight() {
+            return this == RIGHT;
+        }
+
+        public boolean isMiddle() {
+            return this == MIDDLE || this == MIDDLE_CTRL;
         }
     }
 }

@@ -35,45 +35,12 @@ public final class BitmapFont implements CanvasFont {
 
     @Override
     public int getGlyphWidth(int character, double size, int offset) {
-        var glyph = this.characters.getOrDefault(character, this.defaultGlyph);
-        if (glyph.logicalHeight() == 0 || glyph.height() == 0) {
-            return (int) (((glyph.fontWidth())) * (size / 8));
-        }
-
-        final double textureScale = (double) glyph.height() / glyph.logicalHeight();
-        final double baseScale = size / textureScale / 8;
-
-        return (int) (((glyph.fontWidth() + offset)) * baseScale);
+        return this.characters.getOrDefault(character, this.defaultGlyph).getWidth(size, offset);
     }
 
     @Override
     public int drawGlyph(DrawableCanvas canvas, int character, int x, int y, double size, int offset, CanvasColor color) {
-        var glyph = this.characters.getOrDefault(character, this.defaultGlyph);
-
-        if (glyph.logicalHeight() == 0 || glyph.height() == 0) {
-            return (int) (((glyph.fontWidth())) * (size / 8));
-        }
-
-        final double textureScale = (double) glyph.height() / glyph.logicalHeight();
-        final double baseScale = size / textureScale / 8;
-
-        for (int fX = 0; fX < glyph.width(); fX++) {
-            for (int fY = 0; fY < glyph.height(); fY++) {
-                if (glyph.texture()[fX + fY * glyph.width()]) {
-                    for (int lX = 0; lX < baseScale; lX++) {
-                        for (int lY = 0; lY < baseScale; lY++) {
-                            canvas.set(
-                                    x + MathHelper.floor(fX * baseScale) + lX,
-                                    y + MathHelper.floor((fY + (7 - glyph.ascend()) * textureScale) * baseScale) + lY,
-                                    color
-                            );
-                        }
-                    }
-                }
-            }
-        }
-
-        return (int) (((glyph.fontWidth() + offset)) * baseScale);
+        return this.characters.getOrDefault(character, this.defaultGlyph).draw(canvas, x, y, size, offset, color);
     }
 
     @Override
@@ -88,10 +55,35 @@ public final class BitmapFont implements CanvasFont {
 
     public record Glyph(int width, int height, int ascend, int fontWidth, int logicalHeight, boolean[] texture) {
         public static final Glyph INVALID;
-        public static final Glyph EMPTY = new Glyph(0, 0, 0, 0, 0, new boolean[] {});
+        public static final Glyph EMPTY = new Glyph(0, 0, 0, 0, 0, new boolean[]{});
+        public static final Glyph ATLAS = new Glyph(8, 8, 8, 8, 8, convert(8 * 8,
+                """
+                        xxxxxxxx
+                        xx----xx
+                        x-x--x-x
+                        x--xx--x
+                        x--xx--x
+                        x-x--x-x
+                        xx----xx
+                        xxxxxxxx
+                        """
+        ));
 
-        static  {
-            var array =  new boolean[8*5];
+        public static final Glyph PLAYER = new Glyph(8, 8, 8, 8, 8, convert(8 * 8,
+                """
+                        xxxxxxxx
+                        xxxxxxxx
+                        x------x
+                        --------
+                        -xx--xx-
+                        ---xx---
+                        --x--x--
+                        --xxxx--
+                        """
+        ));
+
+        static {
+            var array = new boolean[8 * 5];
 
             for (int x = 0; x < 5; x++) {
                 for (int y = 0; y < 8; y++) {
@@ -101,7 +93,54 @@ public final class BitmapFont implements CanvasFont {
                 }
             }
 
-            INVALID = new Glyph(5, 8,  7, 5,8, array);
+            INVALID = new Glyph(5, 8, 7, 5, 8, array);
+        }
+
+        private static boolean[] convert(int size, String string) {
+            var texture = new boolean[size];
+            string = string.replace("\n", "");
+            for (var i = 0; i < string.length(); i++) {
+                texture[i] = string.charAt(i) == 'x';
+            }
+            return texture;
+        }
+
+        public int draw(DrawableCanvas canvas, int x, int y, double size, int offset, CanvasColor color) {
+            if (this.logicalHeight() == 0 || this.height() == 0) {
+                return (int) (((this.fontWidth())) * (size / 8));
+            }
+
+            final double textureScale = (double) this.height() / this.logicalHeight();
+            final double baseScale = size / textureScale / 8;
+
+            for (int fX = 0; fX < this.width(); fX++) {
+                for (int fY = 0; fY < this.height(); fY++) {
+                    if (this.texture()[fX + fY * this.width()]) {
+                        for (int lX = 0; lX < baseScale; lX++) {
+                            for (int lY = 0; lY < baseScale; lY++) {
+                                canvas.set(
+                                        x + MathHelper.floor(fX * baseScale) + lX,
+                                        y + MathHelper.floor((fY + (7 - this.ascend()) * textureScale) * baseScale) + lY,
+                                        color
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+
+            return (int) (((this.fontWidth() + offset)) * baseScale);
+        }
+
+        public int getWidth(double size, int offset) {
+            if (this.logicalHeight() == 0 || this.height() == 0) {
+                return (int) (((this.fontWidth())) * (size / 8));
+            }
+
+            final double textureScale = (double) this.height() / this.logicalHeight();
+            final double baseScale = size / textureScale / 8;
+
+            return (int) (((this.fontWidth() + offset)) * baseScale);
         }
     }
 }

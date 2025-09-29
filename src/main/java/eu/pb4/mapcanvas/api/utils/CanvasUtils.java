@@ -1,5 +1,6 @@
 package eu.pb4.mapcanvas.api.utils;
 
+import com.mojang.serialization.JsonOps;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.api.core.IconContainer;
@@ -7,7 +8,7 @@ import net.minecraft.block.MapColor;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
 import net.minecraft.util.math.MathHelper;
 
 import java.awt.image.BufferedImage;
@@ -167,7 +168,7 @@ public final class CanvasUtils {
                     iconNbt.putInt("Y", icon.getY());
                     iconNbt.putByte("Rot", icon.getRotation());
                     if (icon.getText() != null) {
-                        iconNbt.putString("Text", Text.Serialization.toJsonString(icon.getText(), lookup));
+                        iconNbt.putString("Text", TextCodecs.CODEC.encodeStart(lookup.getOps(JsonOps.INSTANCE), icon.getText()).getOrThrow().toString());
                     }
 
                     icons.add(iconNbt);
