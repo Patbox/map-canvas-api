@@ -146,7 +146,7 @@ public final class FontRegistry {
                         glyph.draw(canvas,x + posX + shadowOffset, y + shadowOffset, size, 0, shadow);
                     }
 
-                    posX += glyph.draw(canvas, x + posX, y, size, style.isBold() ? 1 : 0, CanvasColor.BLACK_NORMAL);
+                    posX += glyph.draw(canvas, x + posX, y, size, style.isBold() ? 1 : 0, color);
                 }
 
                 if (shadow != CanvasColor.CLEAR) {
