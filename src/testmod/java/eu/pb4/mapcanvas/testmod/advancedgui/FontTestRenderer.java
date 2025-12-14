@@ -10,8 +10,10 @@ import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.parsers.TagParser;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.StyleSpriteSource;
 import net.minecraft.text.Text;
 import net.minecraft.util.ClickType;
+import net.minecraft.util.Identifier;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,8 +77,13 @@ public class FontTestRenderer implements ActiveRenderer {
         font.drawText(canvas, "Zażółć gęślą jaźń", 16, i, 16, CanvasColor.BLACK_HIGH);
         i += 16 + 4;
 
-        DefaultFonts.REGISTRY.drawText(canvas, this.userText, 16, i, 16, CanvasColor.BLACK_HIGH);
-    }
+        DefaultFonts.REGISTRY.drawText(canvas, this.userText, 16, i, 32, CanvasColor.BLACK_HIGH, CanvasColor.CLEAR, 2);
+        i += 32 + 4;
+
+        var fontId = this.userText.getStyle().getFont() instanceof StyleSpriteSource.Font font1 ? font1.id() : Identifier.of("default");
+        DefaultFonts.REGISTRY.getFont(fontId).drawText(canvas, this.userText.getString(), 16, i, 32, CanvasColor.BLACK_HIGH);
+
+        DefaultFonts.VANILLA.drawText(canvas, "" + displayFps, 2, canvas.getHeight() - 10, 8, CanvasColor.GRAY_HIGH);    }
 
     @Override
     public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {

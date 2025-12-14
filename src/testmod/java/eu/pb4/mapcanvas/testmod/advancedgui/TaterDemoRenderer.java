@@ -18,6 +18,7 @@ import net.minecraft.util.ClickType;
 import net.minecraft.util.math.MathHelper;
 import org.joml.Matrix3x2f;
 
+import java.awt.*;
 import java.util.ArrayList;
 
 public class TaterDemoRenderer implements ActiveRenderer {
@@ -118,6 +119,14 @@ public class TaterDemoRenderer implements ActiveRenderer {
 
         //DefaultFonts.VANILLA.drawText(ViewUtils.rotate(canvas, MathHelper.PI), "Test", , CanvasColor.RED_HIGH);
         DefaultFonts.VANILLA.drawText(canvas, "" + ((System.nanoTime() - timeX) / 1000000), 1, 1, 16, CanvasColor.WHITE_HIGH);
+
+        var graphics = CanvasUtils.getGraphics(canvas);
+        graphics.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
+        graphics.setColor(new Color(Math.abs(MathHelper.sin(time / 500d)), 0f, Math.abs(MathHelper.cos(time / 500d))));
+        graphics.setStroke(new BasicStroke(5));
+        graphics.translate(canvas.getWidth() / 2, canvas.getHeight() / 2);
+        graphics.drawLine(0, 0, (int) (MathHelper.sin(time / 500d) * 100), (int) (MathHelper.cos(time / 500d) * 100));
+        graphics.dispose();
     }
 
     @Override

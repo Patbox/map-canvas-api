@@ -3,9 +3,13 @@ package eu.pb4.mapcanvas.impl.font;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
+import eu.pb4.mapcanvas.api.font.FontUtils;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.util.math.MathHelper;
+import org.jetbrains.annotations.ApiStatus;
+
+import java.util.Arrays;
 
 public final class BitmapFont implements CanvasFont {
     public static final BitmapFont EMPTY = new BitmapFont(Glyph.INVALID, Metadata.empty());
@@ -142,5 +146,31 @@ public final class BitmapFont implements CanvasFont {
 
             return (int) (((this.fontWidth() + offset)) * baseScale);
         }
+    }
+
+    public static BitmapFont tryConvert(CanvasFont font) {
+        return switch (font) {
+            case BitmapFont bitmapFont -> bitmapFont;
+            case LazyFont lazyFont -> tryConvert(lazyFont.font());
+            case StackedFont stackedFont when FontUtils.isBitmapFont(stackedFont) -> {
+                var fonts = Arrays.stream(stackedFont.fonts()).map(BitmapFont::tryConvert).toArray(BitmapFont[]::new);
+                var out = new BitmapFont(fonts[0].defaultGlyph, stackedFont.getMetadata());
+                for (var i = fonts.length - 1; i >= 0; i--) {
+                    out.characters.putAll(fonts[i].characters);
+                }
+
+                yield out;
+            }
+            case StackedLazyFont stackedFont when FontUtils.isBitmapFont(stackedFont) -> {
+                var fonts = Arrays.stream(stackedFont.fonts()).map(BitmapFont::tryConvert).toArray(BitmapFont[]::new);
+                var out = new BitmapFont(fonts[0].defaultGlyph, stackedFont.getMetadata());
+                for (var i = fonts.length - 1; i >= 0; i--) {
+                    out.characters.putAll(fonts[i].characters);
+                }
+
+                yield out;
+            }
+            default -> null;
+        };
     }
 }

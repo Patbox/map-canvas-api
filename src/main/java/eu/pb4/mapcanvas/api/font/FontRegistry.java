@@ -47,6 +47,10 @@ public final class FontRegistry {
         return this.fonts.getOrDefault(font, this.defaultFont);
     }
 
+    public CanvasFont getFontOrElse(@Nullable Identifier font, CanvasFont orElse) {
+        return this.fonts.getOrDefault(font, orElse);
+    }
+
     @Nullable
     public CanvasFont getFont(@Nullable Identifier font) {
         return this.fonts.get(font);

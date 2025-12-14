@@ -10,8 +10,10 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.Font;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.zip.ZipFile;
 
 public final class FontUtils {
@@ -102,36 +104,107 @@ public final class FontUtils {
     }
 
     /**
-     * Creates canvas font from
+     * Creates canvas font from AWT font object.
      * @param font Awt Font used as a base
      * @return New canvas font
      */
     public static CanvasFont fromAwtFont(Font font) {
-        return new AwtFont(font, CanvasFont.Metadata.create(font.getName(), List.of(), "A font"));
+        return new AwtFont(font, CanvasFont.Metadata.create(font.getName(), List.of(), "A font"), false);
     }
 
     /**
-     * Creates canvas font from
+     * Creates canvas font from AWT font object.
      * @param font Awt Font used as a base
      * @param metadata Metadata used by font
      * @return New canvas font
      */
     public static CanvasFont fromAwtFont(Font font, CanvasFont.Metadata metadata) {
-        return new AwtFont(font, metadata);
+        return new AwtFont(font, metadata, false);
+    }
+
+    /**
+     * Creates canvas font from AWT font object.
+     * @param font Awt Font used as a base
+     * @param antiAliasing toggles Anti Aliasing
+     * @return New canvas font
+     */
+    public static CanvasFont fromAwtFont(Font font, boolean antiAliasing) {
+        return new AwtFont(font, CanvasFont.Metadata.create(font.getName(), List.of(), "A font"), antiAliasing);
+    }
+
+    /**
+     * Creates canvas font from AWT font object.
+     * @param font Awt Font used as a base
+     * @param metadata Metadata used by font
+     * @param antiAliasing toggles Anti Aliasing
+     * @return New canvas font
+     */
+    public static CanvasFont fromAwtFont(Font font, CanvasFont.Metadata metadata, boolean antiAliasing) {
+        return new AwtFont(font, metadata, antiAliasing);
+    }
+
+    /**
+     * Creates canvas font from TrueType font stream.
+     * @param stream InputStream representing the font
+     * @return New canvas font
+     */
+    public static CanvasFont fromTrueTypeFont(InputStream stream) throws Exception {
+        return fromAwtFont(Font.createFont(Font.TRUETYPE_FONT, stream));
+    }
+
+    /**
+     * Creates canvas font from TrueType font stream.
+     * @param stream InputStream representing the font
+     * @param metadata Metadata used by font
+     * @return New canvas font
+     */
+    public static CanvasFont fromTrueTypeFont(InputStream stream, CanvasFont.Metadata metadata) throws Exception {
+        return fromAwtFont(Font.createFont(Font.TRUETYPE_FONT, stream), metadata, false);
+    }
+
+    /**
+     * Creates canvas font from TrueType font stream.
+     * @param stream InputStream representing the font
+     * @param antiAliasing toggles Anti Aliasing
+     * @return New canvas font
+     */
+    public static CanvasFont fromTrueTypeFont(InputStream stream, boolean antiAliasing) throws Exception {
+        return fromAwtFont(Font.createFont(Font.TRUETYPE_FONT, stream), antiAliasing);
+    }
+
+    /**
+     * Creates canvas font from TrueType font stream.
+     * @param stream InputStream representing the font
+     * @param metadata Metadata used by font
+     * @param antiAliasing toggles Anti Aliasing
+     * @return New canvas font
+     */
+    public static CanvasFont fromTrueTypeFont(InputStream stream, CanvasFont.Metadata metadata, boolean antiAliasing) throws Exception {
+        return fromAwtFont(Font.createFont(Font.TRUETYPE_FONT, stream), metadata, antiAliasing);
     }
 
     /**
      * Writes font to Map Canvas API Font format
-     * Only works with bitmap fonts
+     * Only works with bitmap fonts.
      *
      * @param font font to convert
      * @param stream stream it will be written to
      * @return true for successful conversion, otherwise false
      */
     public static boolean toMapCanvasFontFormat(CanvasFont font, OutputStream stream) {
-        if (font instanceof BitmapFont bitmapFont) {
+        var bitmapFont = BitmapFont.tryConvert(font);
+        if (bitmapFont != null) {
             return RawBitmapFontSerializer.write(bitmapFont, stream);
         }
+
         return false;
+    }
+
+    public static boolean isBitmapFont(CanvasFont font) {
+        return font instanceof BitmapFont
+                || (font instanceof LazyFont lazyFont && isBitmapFont(lazyFont.font()))
+                || (font instanceof StackedFont stackedFont && Arrays.stream(stackedFont.fonts()).filter(Predicate.not(FontUtils::isBitmapFont)).findAny().isEmpty())
+                || (font instanceof StackedLazyFont stackedLazyFont && Arrays.stream(stackedLazyFont.fonts()).filter(Predicate.not(FontUtils::isBitmapFont)).findAny().isEmpty())
+                ;
     }
 }

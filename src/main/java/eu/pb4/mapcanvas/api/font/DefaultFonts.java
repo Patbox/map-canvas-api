@@ -71,13 +71,13 @@ public final class DefaultFonts {
         UNIFONT = REGISTRY.register(Identifier.of("unifont:default"), new MojangUnifontFont(CanvasFont.Metadata.create("Unifont",
                 List.of("Roman Czyborra", "Paul Hardy"),
                 "https://scripts.sil.org/OFL"),
-                "unifont_all_no_pua-15.1.05", "https://resources.download.minecraft.net/66/666999116c467f10622db1527a06ddc0a6efad2a"));
+                "unifont_all_no_pua-16.0.03", "https://resources.download.minecraft.net/cc/ccd5ac4767ce0a9c71d1dd62f2dc25449789b5dd"));
         var jp = CanvasFont.Metadata.create("Unifont JP",
                 List.of("Roman Czyborra", "Paul Hardy"),
                 "https://scripts.sil.org/OFL");
         UNIFONT_JP = REGISTRY.register(Identifier.of("unifont:japanese"), new StackedLazyFont(new LazyCanvasFont[]{
-                new MojangUnifontFont(jp, "unifont_jp_patch-15.1.05",
-                        "https://resources.download.minecraft.net/66/666999116c467f10622db1527a06ddc0a6efad2a"),
+                new MojangUnifontFont(jp, "unifont_jp_patch-16.0.03",
+                        "https://resources.download.minecraft.net/59/590470ab0f17afb73a4e41d9cb56fdbe069d275a"),
                 UNIFONT}, jp));
         REGISTRY.register(Identifier.of("minecraft:uniform"), UNIFONT);
     }

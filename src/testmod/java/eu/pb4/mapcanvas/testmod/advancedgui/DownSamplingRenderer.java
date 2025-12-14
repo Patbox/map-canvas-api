@@ -21,8 +21,7 @@ public class DownSamplingRenderer implements ActiveRenderer {
 
     public DownSamplingRenderer() {}
 
-    private byte getColor(BufferedImage bufferedImage, int x, int y, Int2ObjectOpenHashMap<CanvasColor> cache) {
-        var rgb = bufferedImage.getRGB(x, y);
+    private byte getColor(int rgb, Int2ObjectOpenHashMap<CanvasColor> cache) {
         if (cache.containsKey(rgb)) {
             return cache.get(rgb).getRenderColor();
         }
@@ -63,7 +62,7 @@ public class DownSamplingRenderer implements ActiveRenderer {
         try {
             this.source = ImageIO.read(new URL("https://i.stack.imgur.com/MlIL8.png"));
             //this.source = ImageIO.read(new URL("https://i.imgur.com/Xa2KyPN.png"));
-            this.image1 = CanvasImage.from(this.source, CanvasImage.ColorResolver.DEFAULT);
+            this.image1 = CanvasImage.from(this.source, CanvasUtils.ColorMapper.DEFAULT);
             this.image2 = null;
         } catch (Throwable e) {
 
@@ -86,7 +85,7 @@ public class DownSamplingRenderer implements ActiveRenderer {
         if (this.image2 == null) {
             this.image2 = this.image1;
             var cache = new Int2ObjectOpenHashMap<CanvasColor>();
-            this.image1 = CanvasImage.from(this.source, (buf, xa, ya) -> this.getColor(buf, xa, ya, cache));
+            this.image1 = CanvasImage.from(this.source, (color) -> this.getColor(color, cache));
         } else {
             this.image1 = this.image2;
             this.image2 = null;

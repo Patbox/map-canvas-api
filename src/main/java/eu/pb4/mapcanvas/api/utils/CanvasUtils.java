@@ -2,6 +2,7 @@ package eu.pb4.mapcanvas.api.utils;
 
 import com.mojang.serialization.JsonOps;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
+import eu.pb4.mapcanvas.api.core.CanvasImage;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.api.core.IconContainer;
 import net.minecraft.block.MapColor;
@@ -9,15 +10,22 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.text.TextCodecs;
+import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.MathHelper;
+import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBuffer;
+import java.awt.image.IndexColorModel;
+import java.awt.image.Raster;
 
 public final class CanvasUtils {
-    private static final byte[] RGB_TO_MAP_LEGACY = new byte[256*256*256];
-
     public static final int MAP_DATA_SIZE = 128;
     public static final int MAP_ICON_SIZE = 256;
+    private static final byte[] RGB_TO_MAP_LEGACY = new byte[256 * 256 * 256];
+    @Nullable
+    private static IndexColorModel colorModel;
 
     private CanvasUtils() {
     }
@@ -181,6 +189,9 @@ public final class CanvasUtils {
         return nbt;
     }
 
+    /**
+     * Creates copy of current canvas state as BufferedImage
+     */
     public static BufferedImage toImage(DrawableCanvas canvas) {
         var image = new BufferedImage(canvas.getWidth(), canvas.getHeight(), BufferedImage.TYPE_INT_ARGB);
         final int width = canvas.getWidth();
@@ -196,6 +207,68 @@ public final class CanvasUtils {
             }
         }
         return image;
+    }
+
+    /**
+     * Wraps canvas as buffered image.
+     */
+    public static BufferedImage wrapAsImage(DrawableCanvas canvas) {
+        var width = canvas.getWidth();
+        var size = canvas.getHeight() * canvas.getWidth();
+
+        var raster = Raster.createInterleavedRaster(
+                canvas instanceof CanvasImage canvasImage
+                        ? new DataBuffer(DataBuffer.TYPE_BYTE, size) {
+                    @Override
+                    public int getElem(int bank, int i) {
+                        return Byte.toUnsignedInt(canvasImage.getRawAt(i));
+                    }
+
+                    @Override
+                    public void setElem(int bank, int i, int val) {
+                        canvasImage.setRawAt(i, (byte) val);
+                    }
+                }
+                        : new DataBuffer(DataBuffer.TYPE_BYTE, size) {
+                    @Override
+                    public int getElem(int bank, int i) {
+                        return Byte.toUnsignedInt(canvas.getRaw(i % width, i / width));
+                    }
+
+                    @Override
+                    public void setElem(int bank, int i, int val) {
+                        canvas.setRaw(i % width, i / width, (byte) val);
+                    }
+                }, width, canvas.getHeight(), width, 1, new int[]{0}, new Point(0, 0)
+        );
+
+        return new BufferedImage(getMapColorModel(), raster, false, null);
+    }
+
+    public static Graphics2D getGraphics(DrawableCanvas canvas) {
+        return wrapAsImage(canvas).createGraphics();
+    }
+
+    public static IndexColorModel getMapColorModel() {
+        if (colorModel != null) {
+            //return colorModel;
+        }
+        var r = new byte[256];
+        var g = new byte[256];
+        var b = new byte[256];
+        var a = new byte[256];
+
+        for (var i = 4; i < 256; i++) {
+            var color = CanvasColor.getFromRaw(i);
+
+            var rgb = color.getRgbColor();
+            r[i] = (byte) ColorHelper.getRed(rgb);
+            g[i] = (byte) ColorHelper.getGreen(rgb);
+            b[i] = (byte) ColorHelper.getBlue(rgb);
+            a[i] = (byte) 0xFF;
+        }
+
+        return colorModel = new IndexColorModel(8, 247, r, g, b, a);
     }
 
     private static CanvasColor findClosestColorMath(int rgb) {
@@ -230,5 +303,12 @@ public final class CanvasUtils {
         }
 
         return out;
+    }
+
+    public interface ColorMapper {
+        ColorMapper DEFAULT = CanvasUtils::findClosestRawColorARGB;
+        ColorMapper DEFAULT_BLACK_CLEAR = (color) -> (color & 0xFFFFFF) == 0 ? 0 : CanvasUtils.findClosestRawColorARGB(color);
+
+        byte getRawColor(int color);
     }
 }

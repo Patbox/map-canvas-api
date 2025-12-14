@@ -8,6 +8,7 @@ import eu.pb4.mapcanvas.api.utils.ViewUtils;
 import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.ClickType;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.noise.SimplexNoiseSampler;
 import net.minecraft.util.math.random.Xoroshiro128PlusPlusRandom;
 
@@ -33,7 +34,7 @@ public class SurfaceRenderer implements ActiveRenderer {
             for (int y = 0; y < height; y++) {
                 var color = CanvasColor.values()[(int) ((
                                         (
-                                                (this.noise.sample((x / 80d + sin) + Math.sin(y / 40d), y / 80d + (time / 1000d) % 3600 + Math.sin(x / 40d), (time / 600d) % 3600)
+                                                (this.noise.sample((x / 80d + sin *2) + Math.sin(y / 40d), y / 80d + (time / 1000d) % 3600 + Math.sin(x / 40d) * 2, (time / 600d) % 3600)
                                         ) * 8 + time / 400) % colorSize) + 4)];
 
 
@@ -53,12 +54,14 @@ public class SurfaceRenderer implements ActiveRenderer {
         var textView = ViewUtils.transform(canvas, new ViewUtils.Transformer() {
             @Override
             public Point transform(int x, int y) {
-                return new ViewUtils.Transformer.Point((int) Math.round(x + Math.sin(y / 10d + time / 500d) * 2), (int) Math.round(y + Math.sin(x / 10d + time / 500d) * 2));
+                return new ViewUtils.Transformer.Point((int) Math.floor(x + Math.sin(y / 10d + time / 500d) * 2), (int) Math.floor(y + Math.sin(x / 10d + time / 500d) * 2));
             }
         });
 
-        DefaultFonts.UNSANDED.drawText(textView, text, 17, 17, 16, CanvasColor.GRAY_HIGH);
-        DefaultFonts.UNSANDED.drawText(textView, text, 16, 16, 16, CanvasColor.WHITE_HIGH);
+        var font = DefaultFonts.REGISTRY.getFontOrElse(Identifier.of("roboto", "bold/aa"), DefaultFonts.UNSANDED);
+
+        font.drawText(textView, text, 17, 17, 32, CanvasColor.GRAY_HIGH);
+        font.drawText(textView, text, 16, 16, 32, CanvasColor.WHITE_HIGH);
     }
 
     @Override

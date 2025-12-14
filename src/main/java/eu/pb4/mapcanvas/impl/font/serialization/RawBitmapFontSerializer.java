@@ -4,6 +4,9 @@ import com.google.common.primitives.Shorts;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.impl.font.BitmapFont;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import net.jpountz.lz4.LZ4BlockInputStream;
+import net.jpountz.lz4.LZ4BlockOutputStream;
+import net.jpountz.lz4.LZ4FrameOutputStream;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,7 +44,7 @@ public class RawBitmapFontSerializer {
                     cStream.setLevel(Deflater.BEST_COMPRESSION);
                     yield cStream;
                 }
-                //case XZ -> new XZOutputStream(stream, new LZMA2Options());
+                case LZ4 -> new LZ4BlockOutputStream(stream);
             };
 
             {
@@ -79,9 +82,9 @@ public class RawBitmapFontSerializer {
 
             if (stream instanceof GZIPOutputStream gzipOutputStream ) {
                 gzipOutputStream.finish();
-            }/* else if (stream instanceof XZOutputStream stream1) {
+            } else if (stream instanceof LZ4BlockOutputStream stream1) {
                 stream1.finish();
-            }*/
+            }
 
             return true;
         } catch (Exception e) {
@@ -107,7 +110,7 @@ public class RawBitmapFontSerializer {
                     stream = switch (Compression.values()[compressionId]) {
                         case NONE -> stream;
                         case GZIP -> new GZIPInputStream(stream);
-                        //case XZ -> new XZInputStream(stream);
+                        case LZ4 -> new LZ4BlockInputStream(stream);
                     };
 
                     String name = new String(stream.readNBytes(readVarInt(stream)), StandardCharsets.UTF_8);
@@ -212,6 +215,6 @@ public class RawBitmapFontSerializer {
     public enum Compression {
         NONE,
         GZIP,
-        //XZ
+        LZ4
     }
 }

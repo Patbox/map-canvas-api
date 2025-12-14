@@ -296,6 +296,10 @@ public final class CanvasColor {
         return BY_RENDER_COLOR[Byte.toUnsignedInt(renderColor)];
     }
 
+    public static CanvasColor getFromRaw(int renderColor) {
+        return BY_RENDER_COLOR[renderColor];
+    }
+
     public static CanvasColor from(MapColor color, MapColor.Brightness brightness) {
         return BY_RENDER_COLOR[Byte.toUnsignedInt(color.getRenderColorByte(brightness))];
     }

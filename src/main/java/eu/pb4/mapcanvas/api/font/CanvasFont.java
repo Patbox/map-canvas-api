@@ -104,6 +104,14 @@ public interface CanvasFont {
             return new Metadata(name, List.copyOf(authors), Optional.ofNullable(description));
         }
 
+        public static Metadata create(String name, List<String> authors) {
+            return new Metadata(name, List.copyOf(authors), Optional.empty());
+        }
+
+        public static Metadata create(String name) {
+            return new Metadata(name, List.of(), Optional.empty());
+        }
+
         public static Metadata empty() {
             return EMPTY;
         }

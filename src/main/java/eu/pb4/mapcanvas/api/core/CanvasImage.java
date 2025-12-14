@@ -1,12 +1,11 @@
 package eu.pb4.mapcanvas.api.core;
 
 import com.google.gson.JsonParser;
-import com.mojang.datafixers.DataFix;
-import com.mojang.datafixers.DataFixer;
-import com.mojang.datafixers.DataFixerUpper;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
+import eu.pb4.mapcanvas.impl.image.FloydSteinbergDither;
+import eu.pb4.mapcanvas.impl.image.RawImage;
 import net.minecraft.SharedConstants;
 import net.minecraft.datafixer.Schemas;
 import net.minecraft.datafixer.TypeReferences;
@@ -14,7 +13,6 @@ import net.minecraft.item.map.MapDecorationType;
 import net.minecraft.item.map.MapDecorationTypes;
 import net.minecraft.item.map.MapState;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
@@ -49,13 +47,59 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
     }
 
     public static CanvasImage from(BufferedImage image) {
-        return from(image, ColorResolver.DEFAULT);
+        return from(image, CanvasUtils.ColorMapper.DEFAULT);
     }
+
+    public static CanvasImage from(BufferedImage image, CanvasUtils.ColorMapper mapper) {
+        var width = image.getWidth();
+        var height = image.getHeight();
+
+        var canvas = new CanvasImage(width, height);
+        var pixels = width * height;
+
+
+        var type = image.getType();
+        if (type >= BufferedImage.TYPE_3BYTE_BGR && type <= BufferedImage.TYPE_4BYTE_ABGR_PRE || type == BufferedImage.TYPE_BYTE_BINARY || type == BufferedImage.TYPE_CUSTOM) {
+            var rawImage = RawImage.convert(image);
+            for (int i = 0; i < pixels; i++) {
+                canvas.data[i] = mapper.getRawColor(rawImage.data()[i]);
+            }
+        } else {
+            var buf = image.getData().getDataBuffer();
+            var color = image.getColorModel();
+            for (int i = 0; i < pixels; i++) {
+                canvas.data[i] = mapper.getRawColor(color.getRGB(buf.getElem(i)));
+            }
+        }
+
+        return canvas;
+    }
+
+    public static CanvasImage fromWithFloydSteinbergDither(BufferedImage image) {
+        return fromWithFloydSteinbergDither(image, CanvasUtils.ColorMapper.DEFAULT);
+    }
+
+    public static CanvasImage fromWithFloydSteinbergDither(BufferedImage image, CanvasUtils.ColorMapper mapper) {
+        var rawImage = RawImage.convert(image);
+        var width = rawImage.width();
+        var height = rawImage.height();
+
+        var canvas = new CanvasImage(width, height);
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+                canvas.set(x, y, FloydSteinbergDither.sample(rawImage, x, y, mapper));
+            }
+        }
+
+        return canvas;
+    }
+
+
     public static CanvasImage from(BufferedImage image, ColorResolver resolver) {
         var width = image.getWidth();
         var height = image.getHeight();
 
-        var canvas = new CanvasImage(image.getWidth(), image.getHeight());
+        var canvas = new CanvasImage(width, height);
 
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
@@ -185,6 +229,14 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
     @Override
     public void removeIcon(CanvasIcon icon) {
         this.icons.remove(icon);
+    }
+
+    public byte getRawAt(int index) {
+        return this.data[index];
+    }
+
+    public void setRawAt(int index, byte data) {
+        this.data[index] = data;
     }
 
     private final class ImageCanvasIcon implements CanvasIcon {

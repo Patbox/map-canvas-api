@@ -43,6 +43,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 import java.util.zip.ZipFile;
 
@@ -121,6 +122,8 @@ public class TestMod implements ModInitializer {
     }
 
     public void onInitialize() {
+        System.setProperty("java.awt.headless", "true");
+
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(
                     literal("test").then(
@@ -254,6 +257,24 @@ public class TestMod implements ModInitializer {
 
         DefaultFonts.UNIFONT.getGlyphWidth(0, 1, 0);
 
+        try {
+            Files.list(FabricLoader.getInstance().getGameDir().resolve("fonts")).forEach(path -> {
+                var name = path.getFileName().toString();
+                var parts = name.split("-", 2);
+                var id = Identifier.tryParse(parts[0].toLowerCase(Locale.ROOT), parts[1].toLowerCase(Locale.ROOT).substring(0, parts[1].length() - 4));
+                try {
+                    var font = Font.createFont(Font.TRUETYPE_FONT, Files.newInputStream(path));
+                    DefaultFonts.REGISTRY.register(id, FontUtils.fromAwtFont(font));
+                    assert id != null;
+                    DefaultFonts.REGISTRY.register(id.withSuffixedPath("/aa"), FontUtils.fromAwtFont(font, true));
+                } catch (Throwable e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         System.out.println("Vanilla: " + VM.current().sizeOf(((BitmapFont) DefaultFonts.VANILLA).characters.get('w').texture()));
         System.out.println("Unifont: " + VM.current().sizeOf(((BitmapFont) ((LazyFont) DefaultFonts.UNIFONT).font()).characters.get('w').texture()));
 
@@ -362,12 +383,13 @@ public class TestMod implements ModInitializer {
 
         FontTestRenderer.FONTS.add(this.fontHd);
         FontTestRenderer.FONTS.add(this.pixel);
-        FontTestRenderer.FONTS.add(FontUtils.fromAwtFont(new Font("Comic Sans MS", Font.PLAIN, 64)));
+        FontTestRenderer.FONTS.add(FontUtils.fromAwtFont(new Font("Comic Sans MS", Font.PLAIN, 64), true));
 
         ServerLifecycleEvents.SERVER_STARTED.register((s) -> {
             this.setCurrentRenderer(this.menuRenderer);
             this.renderers.add(new Pair<>("TaterDemo", new TaterDemoRenderer(this.tater, this.fontHd, this.logo)));
             this.renderers.add(new Pair<>("SimpleSurface", new SurfaceRenderer()));
+            this.renderers.add(new Pair<>("AWTOracleShapesDemo", new AWTOracleShapesDemoRenderer()));
             this.renderers.add(new Pair<>("Raycast", new RaycastRenderer(s)));
             this.renderers.add(new Pair<>("BuiltInFontTest", new BuiltinFontTestRenderer()));
             this.renderers.add(new Pair<>("FontTest", new FontTestRenderer()));
