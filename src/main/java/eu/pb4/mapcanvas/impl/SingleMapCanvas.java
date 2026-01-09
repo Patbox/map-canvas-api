@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.ArrayList;
 
 public final class SingleMapCanvas extends AbstractPlayerMapCanvas {
     private final Set<ServerPlayNetworkHandler> players = Collections.synchronizedSet(new HashSet<>());
@@ -21,7 +22,7 @@ public final class SingleMapCanvas extends AbstractPlayerMapCanvas {
 
     @Override
     public void destroy() {
-        for (var player : this.players) {
+        for (var player : new ArrayList<>(this.players)) {
             this.removePlayer(player);
         }
         super.destroy();
