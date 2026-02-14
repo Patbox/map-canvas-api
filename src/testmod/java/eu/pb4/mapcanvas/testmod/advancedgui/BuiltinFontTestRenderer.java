@@ -82,7 +82,7 @@ public class BuiltinFontTestRenderer implements ActiveRenderer {
         i += 32 + 4;
 
         var fontId = this.userText.getStyle().getFont() instanceof StyleSpriteSource.Font font1 ? font1.id() : Identifier.of("default");
-        DefaultFonts.REGISTRY.getFont(fontId).drawText(canvas, this.userText.getString(), 16, i, 32, CanvasColor.BLACK_HIGH);
+        DefaultFonts.REGISTRY.getDefaultedFont(fontId).drawText(canvas, this.userText.getString(), 16, i, 32, CanvasColor.BLACK_HIGH);
 
         DefaultFonts.VANILLA.drawText(canvas, "" + displayFps, 2, canvas.getHeight() - 10, 8, CanvasColor.GRAY_HIGH);
     }

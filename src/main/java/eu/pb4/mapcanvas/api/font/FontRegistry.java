@@ -140,6 +140,9 @@ public final class FontRegistry {
                     }
 
                     posX += font.drawGlyph(localCanvas, codePoint, x + posX, yPos, size, style.isBold() ? 3 : 2, color);
+                    if (codePoint == ' ' && style.isBold()) {
+                        posX++;
+                    }
                 } else {
                     var glyph = style.getFont() instanceof StyleSpriteSource.Player ? BitmapFont.Glyph.PLAYER : BitmapFont.Glyph.ATLAS;
                     if (shadow != CanvasColor.CLEAR) {
@@ -180,7 +183,10 @@ public final class FontRegistry {
             public boolean accept(int index, Style style, int codePoint) {
                 if (style.getFont() instanceof StyleSpriteSource.Font font1) {
                     var font = FontRegistry.this.getDefaultedFont(font1.id());
-                    posX += font.getGlyphWidth( codePoint, size, style.isBold() ? 3 : 2);
+                    posX += font.getGlyphWidth(codePoint, size, style.isBold() ? 3 : 2);
+                    if (codePoint == ' ' && style.isBold()) {
+                        posX++;
+                    }
                 } else {
                     var glyph = style.getFont() instanceof StyleSpriteSource.Player ? BitmapFont.Glyph.PLAYER : BitmapFont.Glyph.ATLAS;
                     posX += glyph.getWidth(size, style.isBold() ? 1 : 0);

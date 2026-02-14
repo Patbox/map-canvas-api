@@ -4,6 +4,7 @@ import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.impl.font.serialization.RawBitmapFontSerializer;
 import eu.pb4.mapcanvas.impl.font.serialization.UniHexFontReader;
 import net.fabricmc.loader.api.FabricLoader;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +13,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.ZipInputStream;
@@ -22,13 +22,15 @@ public final class MojangUnifontFont extends LazyFont {
 
     private final String cachedFile;
     private final String downloadUrl;
+    private final @Nullable BitmapFont spacesOverride;
 
     private CompletableFuture<BitmapFont> future;
 
-    public MojangUnifontFont(Metadata metadata, String cachedFile, String downloadUrl) {
+    public MojangUnifontFont(Metadata metadata, String cachedFile, String downloadUrl, @Nullable BitmapFont spaces) {
         super(metadata);
         this.cachedFile = cachedFile;
         this.downloadUrl = downloadUrl;
+        this.spacesOverride = spaces;
     }
 
     @Override
@@ -49,7 +51,11 @@ public final class MojangUnifontFont extends LazyFont {
         var path = FabricLoader.getInstance().getGameDir().resolve(".cache/mapcanvas/" + cachedFile + ".mcaf");
         if (Files.exists(path)) {
             try {
-                this.font = RawBitmapFontSerializer.read(Files.newInputStream(path));
+                var font = RawBitmapFontSerializer.read(Files.newInputStream(path));
+                if (this.spacesOverride != null) {
+                    font.characters.putAll(this.spacesOverride.characters);
+                }
+                this.font = font;
                 return;
             } catch (Throwable throwable) {
                 try {
@@ -76,6 +82,10 @@ public final class MojangUnifontFont extends LazyFont {
                                     try (var stream = Files.newOutputStream(path)) {
                                         RawBitmapFontSerializer.write(font, stream);
                                     }
+                                    if (this.spacesOverride != null) {
+                                        font.characters.putAll(this.spacesOverride.characters);
+                                    }
+
                                     return font;
                                 }
                             }

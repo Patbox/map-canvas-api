@@ -14,6 +14,8 @@ import eu.pb4.mapcanvas.impl.font.BitmapFont;
 import eu.pb4.mapcanvas.impl.font.LazyFont;
 import eu.pb4.mapcanvas.impl.font.serialization.RawBitmapFontSerializer;
 import eu.pb4.mapcanvas.testmod.advancedgui.*;
+import eu.pb4.placeholders.api.ParserContext;
+import eu.pb4.placeholders.api.parsers.TagParser;
 import eu.pb4.polymer.common.api.PolymerCommonUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
@@ -23,10 +25,12 @@ import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.MapColor;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.command.argument.BlockRotationArgumentType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
 import net.minecraft.util.math.BlockPos;
@@ -121,6 +125,19 @@ public class TestMod implements ModInitializer {
         return 0;
     }
 
+    private int testTextWidth(CommandContext<ServerCommandSource> ctx) {
+        try {
+            var text = TagParser.QUICK_TEXT.parseText(StringArgumentType.getString(ctx, "input"), ParserContext.of());
+
+            ctx.getSource().sendMessage(text);
+            ctx.getSource().sendMessage(Text.literal("Canvas: " + DefaultFonts.REGISTRY.getWidth(text, 8)));
+            ctx.getSource().sendMessage(Text.literal("Vanilla: " + MinecraftClient.getInstance().textRenderer.getWidth(text)));
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     public void onInitialize() {
         System.setProperty("java.awt.headless", "true");
 
@@ -133,6 +150,15 @@ public class TestMod implements ModInitializer {
                                     )
                     )
             );
+
+            if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
+                dispatcher.register(
+                        literal("testwidth").then(
+                                argument("input", StringArgumentType.greedyString())
+                                        .executes(this::testTextWidth)
+                        )
+                );
+            }
 
             dispatcher.register(
                     literal("testworld").then(
@@ -272,7 +298,7 @@ public class TestMod implements ModInitializer {
                 }
             });
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            // Ignore
         }
 
         System.out.println("Vanilla: " + VM.current().sizeOf(((BitmapFont) DefaultFonts.VANILLA).characters.get('w').texture()));
@@ -332,6 +358,15 @@ public class TestMod implements ModInitializer {
                 var stream = new FileOutputStream(path.resolve("vanilla.mcaf").toFile());
 
                 RawBitmapFontSerializer.write((BitmapFont) this.font, stream, RawBitmapFontSerializer.Compression.GZIP);
+                stream.close();
+            }
+
+            {
+                var stream = new FileOutputStream(path.resolve("space.mcaf").toFile());
+
+                RawBitmapFontSerializer.write((BitmapFont) FontUtils.fromVanillaFormat(Identifier.of("minecraft:include/space"),
+                        CanvasFont.Metadata.create("Minecraft Space Definition Font", List.of(), "Minecraft Space Definition Font"),
+                        vanillaZip), stream, RawBitmapFontSerializer.Compression.GZIP);
                 stream.close();
             }
 

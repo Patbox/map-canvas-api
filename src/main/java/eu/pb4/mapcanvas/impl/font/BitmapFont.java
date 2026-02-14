@@ -97,7 +97,7 @@ public final class BitmapFont implements CanvasFont {
                 }
             }
 
-            INVALID = new Glyph(5, 8, 7, 5, 8, array);
+            INVALID = new Glyph(5, 8, 7, 4, 8, array);
         }
 
         private static boolean[] convert(int size, String string) {
