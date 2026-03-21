@@ -27,7 +27,7 @@ public interface PlayerCanvas extends DrawableCanvas, IconContainer {
     boolean isDirty();
 
     int getId();
-    MapId getIdComponent();
+    MapId getMapId();
 
     default int getIconHeight() {
         return this.getHeight() * 2;
@@ -39,7 +39,7 @@ public interface PlayerCanvas extends DrawableCanvas, IconContainer {
 
     default ItemStack asStack() {
         var stack = new ItemStack(Items.FILLED_MAP);
-        stack.set(DataComponents.MAP_ID, this.getIdComponent());
+        stack.set(DataComponents.MAP_ID, this.getMapId());
         return stack;
     }
 

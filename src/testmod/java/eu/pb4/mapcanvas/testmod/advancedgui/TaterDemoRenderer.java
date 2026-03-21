@@ -3,19 +3,18 @@ package eu.pb4.mapcanvas.testmod.advancedgui;
 import eu.pb4.mapcanvas.api.core.*;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.api.font.DefaultFonts;
-import eu.pb4.mapcanvas.api.font.FontRegistry;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.utils.ViewUtils;
 import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
-import net.minecraft.block.MapColor;
-import net.minecraft.item.DyeItem;
-import net.minecraft.item.Items;
-import net.minecraft.item.map.MapDecorationTypes;
-import net.minecraft.registry.Registries;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.ClickType;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.DyeItem;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
 import org.joml.Matrix3x2f;
 
 import java.awt.*;
@@ -42,8 +41,8 @@ public class TaterDemoRenderer implements ActiveRenderer {
 
         var list = new ArrayList<CanvasIcon>();
         for (int i = 0; i < 256; i++) {
-            Text text = i % 32 == 0 ? Text.literal("" + i) : null;
-            list.add(canvas.createIcon(Registries.MAP_DECORATION_TYPE.getEntry(i % Registries.MAP_DECORATION_TYPE.size()).get(), i * 3, canvas.getHeight(), (byte) i, text));
+            var text = i % 32 == 0 ? Component.literal("" + i) : null;
+            list.add(canvas.createIcon(BuiltInRegistries.MAP_DECORATION_TYPE.get(i % BuiltInRegistries.MAP_DECORATION_TYPE.size()).get(), i * 3, canvas.getHeight(), (byte) i, text));
         }
 
         this.icons = list.toArray(new CanvasIcon[0]);
@@ -59,7 +58,7 @@ public class TaterDemoRenderer implements ActiveRenderer {
 
         CanvasUtils.fill(canvas, 32, 32, outputCanvas.getWidth() - 32, outputCanvas.getHeight() - 32, CanvasColor.CLEAR_FORCE);
 
-        this.fpsIcon.setText(Text.literal("" + displayFps));
+        this.fpsIcon.setName(Component.literal("" + displayFps));
 
         for (int i = 0; i < 256; i++) {
             var icon = this.icons[i];
@@ -81,7 +80,7 @@ public class TaterDemoRenderer implements ActiveRenderer {
 
             var rotater = ViewUtils.matrix(this.tater, this.tater.getWidth() * 3, this.tater.getHeight() * 3, new Matrix3x2f()
                     .translate(this.tater.getWidth(), this.tater.getWidth() / scale * 2f)
-                    .rotateAbout((float) ((time / 2000d) % MathHelper.TAU), this.tater.getWidth() / 2f, this.tater.getHeight() / 2f)
+                    .rotateAbout((float) ((time / 2000d) % Mth.TWO_PI), this.tater.getWidth() / 2f, this.tater.getHeight() / 2f)
             );
 
             //var rotater = ViewUtils.rotate(this.tater, (float) (time / 2000d % 360));
@@ -117,29 +116,29 @@ public class TaterDemoRenderer implements ActiveRenderer {
             CanvasUtils.draw(canvas, canvas.getWidth() - 64, canvas.getHeight() - 128, 64, 64, ViewUtils.rotate90Clockwise(this.logo));
         }
 
-        //DefaultFonts.VANILLA.drawText(ViewUtils.rotate(canvas, MathHelper.PI), "Test", , CanvasColor.RED_HIGH);
+        //DefaultFonts.VANILLA.drawText(ViewUtils.rotate(canvas, Mth.PI), "Test", , CanvasColor.RED_HIGH);
         DefaultFonts.VANILLA.drawText(canvas, "" + ((System.nanoTime() - timeX) / 1000000), 1, 1, 16, CanvasColor.WHITE_HIGH);
 
         var graphics = CanvasUtils.getGraphics(canvas);
         graphics.setRenderingHint(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_ENABLE);
-        graphics.setColor(new Color(Math.abs(MathHelper.sin(time / 500d)), 0f, Math.abs(MathHelper.cos(time / 500d))));
+        graphics.setColor(new Color(Math.abs(Mth.sin(time / 500d)), 0f, Math.abs(Mth.cos(time / 500d))));
         graphics.setStroke(new BasicStroke(5));
         graphics.translate(canvas.getWidth() / 2, canvas.getHeight() / 2);
-        graphics.drawLine(0, 0, (int) (MathHelper.sin(time / 500d) * 100), (int) (MathHelper.cos(time / 500d) * 100));
+        graphics.drawLine(0, 0, (int) (Mth.sin(time / 500d) * 100), (int) (Mth.cos(time / 500d) * 100));
         graphics.dispose();
     }
 
     @Override
-    public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {
+    public void onClick(ServerPlayer player, VirtualDisplay.ClickType type, int x, int y) {
         if (type.isRight()) {
-            var stack = player.getMainHandStack();
+            var stack = player.getMainHandItem();
             if (stack.isEmpty()) {
                 return;
             }
 
             var count = stack.getCount();
             if (stack.getItem() instanceof DyeItem dyeItem) {
-                CanvasUtils.fill(this.drawableSurface, x - count + 1, y - count + 1, x + count, y + count, CanvasColor.from(dyeItem.getColor().getMapColor(), MapColor.Brightness.HIGH));
+                CanvasUtils.fill(this.drawableSurface, x - count + 1, y - count + 1, x + count, y + count, CanvasColor.from(stack.get(DataComponents.DYE).getMapColor(), MapColor.Brightness.HIGH));
             } else if (stack.getItem() == Items.SPONGE) {
                 CanvasUtils.fill(this.drawableSurface, x - count + 1, y - count + 1, x + count, y + count, CanvasColor.CLEAR);
             }

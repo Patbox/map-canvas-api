@@ -3,6 +3,7 @@ package eu.pb4.mapcanvas.mixin;
 import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import eu.pb4.mapcanvas.impl.PlayerInterface;
 import net.minecraft.client.particle.Particle;
+import net.minecraft.network.protocol.game.ServerboundAttackPacket;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundPickItemFromEntityPacket;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,28 +29,21 @@ public abstract class ServerPlayNetworkHandlerMixin {
         }
     }
 
-    @Inject(method = "handleInteract", at = @At("TAIL"))
-    private void mapcanvas_handleDisplayEntity(ServerboundInteractPacket packet, CallbackInfo ci) {
-        var id = ((PlayerInteractEntityC2SPacketAccessor) packet).getEntityId();
+    @Inject(method = "handleAttack", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;getEntityOrPart(I)Lnet/minecraft/world/entity/Entity;"))
+    private void mapcanvas_handleAttack(ServerboundAttackPacket packet, CallbackInfo ci) {
+        var display = ((PlayerInterface) this.player).mapcanvas_getDisplay(packet.entityId());
+        if (display != null) {
+            display.interactAt(player, packet.entityId(), null, InteractionHand.MAIN_HAND, VirtualDisplay.ClickType.RIGHT);
+        }
+    }
 
-        var display = ((PlayerInterface) this.player).mapcanvas_getDisplay(id);
+
+    @Inject(method = "handleInteract", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;getEntityOrPart(I)Lnet/minecraft/world/entity/Entity;"))
+    private void mapcanvas_handleDisplayEntity(ServerboundInteractPacket packet, CallbackInfo ci) {
+        var display = ((PlayerInterface) this.player).mapcanvas_getDisplay(packet.entityId());
 
         if (display != null) {
-            packet.dispatch(new ServerboundInteractPacket.Handler() {
-                @Override
-                public void onInteraction(InteractionHand hand) {
-                }
-
-                @Override
-                public void onInteraction(InteractionHand hand, Vec3 pos) {
-                    display.interactAt(player, id, pos, hand, VirtualDisplay.ClickType.RIGHT);
-                }
-
-                @Override
-                public void onAttack() {
-                    display.interactAt(player, id, null, InteractionHand.MAIN_HAND, VirtualDisplay.ClickType.LEFT);
-                }
-            });
+            display.interactAt(this.player, packet.entityId(), packet.location(), packet.hand(), VirtualDisplay.ClickType.RIGHT);
         }
     }
 }

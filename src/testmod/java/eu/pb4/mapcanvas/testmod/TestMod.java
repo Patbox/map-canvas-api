@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.datafixers.util.Pair;
 import eu.pb4.mapcanvas.api.core.*;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.api.font.DefaultFonts;
@@ -24,17 +25,17 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.block.MapColor;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.command.argument.BlockRotationArgumentType;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Pair;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import net.minecraft.client.Minecraft;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.TemplateRotationArgument;
+import net.minecraft.commands.arguments.coordinates.RotationArgument;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.util.datafix.fixes.ChunkPalettedStorageFix;
+import net.minecraft.world.level.material.MapColor;
 import org.apache.commons.io.FileUtils;
 import org.openjdk.jol.vm.VM;
 
@@ -51,8 +52,9 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.zip.ZipFile;
 
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
+
 
 public class TestMod implements ModInitializer {
 
@@ -77,12 +79,12 @@ public class TestMod implements ModInitializer {
     private volatile boolean activeRenderer = false;
     private CanvasFont pixel;
 
-    private int testWorld(CommandContext<ServerCommandSource> ctx) {
+    private int testWorld(CommandContext<CommandSourceStack> ctx) {
         try {
-            var dirVert = Direction.byIndex(IntegerArgumentType.getInteger(ctx, "dirVert"));
-            var dirHor = Direction.byIndex(IntegerArgumentType.getInteger(ctx, "dirHor"));
+            var dirVert = Direction.values()[IntegerArgumentType.getInteger(ctx, "dirVert")];
+            var dirHor = Direction.values()[IntegerArgumentType.getInteger(ctx, "dirHor")];
 
-            var canvas = MinecraftWorldCanvas.of(ctx.getSource().getWorld(), BlockPos.ofFloored(ctx.getSource().getPosition()), dirVert, dirHor);
+            var canvas = MinecraftWorldCanvas.of(ctx.getSource().getLevel(), BlockPos.containing(ctx.getSource().getPosition()), dirVert, dirHor);
 
             //DefaultFonts.VANILLA.drawText(canvas, "Hello world!", 0, 0, 8, CanvasColor.BLACK_HIGH);
             CanvasUtils.draw(canvas, 0, 0, this.lastImage);
@@ -94,10 +96,10 @@ public class TestMod implements ModInitializer {
     }
 
 
-    private int test(CommandContext<ServerCommandSource> ctx) {
+    private int test(CommandContext<CommandSourceStack> ctx) {
         try {
             var dir = IntegerArgumentType.getInteger(ctx, "dir");
-            var rot = BlockRotationArgumentType.getBlockRotation(ctx, "rot");
+            var rot = TemplateRotationArgument.getRotation(ctx, "rot");
             if (display != null) {
                 this.display.destroy();
             }
@@ -113,9 +115,9 @@ public class TestMod implements ModInitializer {
                 });
             };
 
-            this.display = VirtualDisplay.builder(this.canvas, BlockPos.ofFloored(ctx.getSource().getPosition()), Direction.byIndex(dir))
+            this.display = VirtualDisplay.builder(this.canvas, BlockPos.containing(ctx.getSource().getPosition()), Direction.values()[dir])
                     .rotation(rot).raycast().invisible().glowing().interactionCallback(callback).build();
-            for (var player : ctx.getSource().getServer().getPlayerManager().getPlayerList()) {
+            for (var player : ctx.getSource().getServer().getPlayerList().getPlayers()) {
                 this.display.addPlayer(player);
             }
         } catch (Exception e) {
@@ -125,13 +127,13 @@ public class TestMod implements ModInitializer {
         return 0;
     }
 
-    private int testTextWidth(CommandContext<ServerCommandSource> ctx) {
+    private int testTextWidth(CommandContext<CommandSourceStack> ctx) {
         try {
-            var text = TagParser.QUICK_TEXT.parseText(StringArgumentType.getString(ctx, "input"), ParserContext.of());
+            var text = TagParser.QUICK_TEXT.parseComponent(StringArgumentType.getString(ctx, "input"), ParserContext.of());
 
-            ctx.getSource().sendMessage(text);
-            ctx.getSource().sendMessage(Text.literal("Canvas: " + DefaultFonts.REGISTRY.getWidth(text, 8)));
-            ctx.getSource().sendMessage(Text.literal("Vanilla: " + MinecraftClient.getInstance().textRenderer.getWidth(text)));
+            ctx.getSource().sendSystemMessage(text);
+            ctx.getSource().sendSystemMessage(Component.literal("Canvas: " + DefaultFonts.REGISTRY.getWidth(text, 8)));
+            ctx.getSource().sendSystemMessage(Component.literal("Vanilla: " + Minecraft.getInstance().font.width(text)));
         } catch (Throwable e) {
             e.printStackTrace();
         }
@@ -145,7 +147,7 @@ public class TestMod implements ModInitializer {
             dispatcher.register(
                     literal("test").then(
                             argument("dir", IntegerArgumentType.integer(0, Direction.values().length))
-                                    .then(argument("rot", BlockRotationArgumentType.blockRotation())
+                                    .then(argument("rot",  TemplateRotationArgument.templateRotation())
                                             .executes(this::test)
                                     )
                     )
@@ -172,7 +174,7 @@ public class TestMod implements ModInitializer {
                     literal("input").then(
                             argument("input", StringArgumentType.greedyString())
                                     .executes((ctx) -> {
-                                        this.currentRenderer.onInput(ctx.getSource().getPlayerOrThrow(), StringArgumentType.getString(ctx, "input"));
+                                        this.currentRenderer.onInput(ctx.getSource().getPlayerOrException(), StringArgumentType.getString(ctx, "input"));
                                         return 0;
                                     })
 
@@ -201,11 +203,11 @@ public class TestMod implements ModInitializer {
             );
         });
 
-        ServerPlayConnectionEvents.JOIN.register((ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server) -> {
+        ServerPlayConnectionEvents.JOIN.register((handler, _, _) -> {
             this.canvas.addPlayer(handler);
         });
 
-        ServerPlayConnectionEvents.DISCONNECT.register((ServerPlayNetworkHandler handler, MinecraftServer server) -> {
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, _) -> {
             this.canvas.removePlayer(handler);
         });
 
@@ -240,7 +242,7 @@ public class TestMod implements ModInitializer {
                 obj.addProperty("mapColor", color.getColor().id);
                 obj.addProperty("mapBrightness", color.getBrightness().id);
                 obj.addProperty("colorInt", color.getRgbColor());
-                obj.addProperty("clear", color.getColor() == MapColor.CLEAR);
+                obj.addProperty("clear", color.getColor() == MapColor.NONE);
 
                 var sb = new StringBuilder(Integer.toHexString(color.getRgbColor()));
                 while (sb.length() < 6) {
@@ -287,12 +289,12 @@ public class TestMod implements ModInitializer {
             Files.list(FabricLoader.getInstance().getGameDir().resolve("fonts")).forEach(path -> {
                 var name = path.getFileName().toString();
                 var parts = name.split("-", 2);
-                var id = Identifier.tryParse(parts[0].toLowerCase(Locale.ROOT), parts[1].toLowerCase(Locale.ROOT).substring(0, parts[1].length() - 4));
+                var id = Identifier.tryBuild(parts[0].toLowerCase(Locale.ROOT), parts[1].toLowerCase(Locale.ROOT).substring(0, parts[1].length() - 4));
                 try {
                     var font = Font.createFont(Font.TRUETYPE_FONT, Files.newInputStream(path));
                     DefaultFonts.REGISTRY.register(id, FontUtils.fromAwtFont(font));
                     assert id != null;
-                    DefaultFonts.REGISTRY.register(id.withSuffixedPath("/aa"), FontUtils.fromAwtFont(font, true));
+                    DefaultFonts.REGISTRY.register(id.withSuffix("/aa"), FontUtils.fromAwtFont(font, true));
                 } catch (Throwable e) {
                     throw new RuntimeException(e);
                 }
@@ -342,12 +344,12 @@ public class TestMod implements ModInitializer {
             var pixelPack = new ZipFile(pixelPath.toFile());
             var jsonPack = new ZipFile(vanillaJsonPath.toFile());
 
-            this.font = FontUtils.fromVanillaFormat(Identifier.of("minecraft:default"),
+            this.font = FontUtils.fromVanillaFormat(Identifier.parse("minecraft:default"),
                     CanvasFont.Metadata.create("Minecraft Font", List.of("Mojang Studios"), "Default Minecraft Font"),
                     vanillaZip);
-            this.fontHd = FontUtils.fromVanillaFormat(Identifier.of("minecraft:default"), hdPack, vanillaZip);
-            this.pixel = FontUtils.fromVanillaFormat(Identifier.of("minecraft:default"), CanvasFont.Metadata.create("Pixel Perfection", List.of("XSSheep"), "Font from Pixel Perfection Resource Pack"), pixelPack, jsonPack);
-            this.fontUnsanded = FontUtils.fromVanillaFormat(Identifier.of("minecraft:default"),
+            this.fontHd = FontUtils.fromVanillaFormat(Identifier.parse("minecraft:default"), hdPack, vanillaZip);
+            this.pixel = FontUtils.fromVanillaFormat(Identifier.parse("minecraft:default"), CanvasFont.Metadata.create("Pixel Perfection", List.of("XSSheep"), "Font from Pixel Perfection Resource Pack"), pixelPack, jsonPack);
+            this.fontUnsanded = FontUtils.fromVanillaFormat(Identifier.parse("minecraft:default"),
                     CanvasFont.Metadata.create("Unsanded", List.of("unascribed"), "An 8px font with wide vertical strokes inspired by Chicago and Craft Sans."),
                     unsPack, jsonPack);
 
@@ -364,7 +366,7 @@ public class TestMod implements ModInitializer {
             {
                 var stream = new FileOutputStream(path.resolve("space.mcaf").toFile());
 
-                RawBitmapFontSerializer.write((BitmapFont) FontUtils.fromVanillaFormat(Identifier.of("minecraft:include/space"),
+                RawBitmapFontSerializer.write((BitmapFont) FontUtils.fromVanillaFormat(Identifier.parse("minecraft:include/space"),
                         CanvasFont.Metadata.create("Minecraft Space Definition Font", List.of(), "Minecraft Space Definition Font"),
                         vanillaZip), stream, RawBitmapFontSerializer.Compression.GZIP);
                 stream.close();
@@ -387,7 +389,7 @@ public class TestMod implements ModInitializer {
             {
                 var stream = new FileOutputStream(path.resolve("alt.mcaf").toFile());
 
-                RawBitmapFontSerializer.write((BitmapFont) FontUtils.fromVanillaFormat(Identifier.of("minecraft:alt"),
+                RawBitmapFontSerializer.write((BitmapFont) FontUtils.fromVanillaFormat(Identifier.parse("minecraft:alt"),
                         CanvasFont.Metadata.create("Minecraft Alt", List.of("Mojang Studios"), "Standard Galactic Alphabet font"),
                         vanillaZip), stream);
                 stream.close();
@@ -395,7 +397,7 @@ public class TestMod implements ModInitializer {
 
             {
                 var stream = new FileOutputStream(path.resolve("illageralt.mcaf").toFile());
-                RawBitmapFontSerializer.write((BitmapFont) FontUtils.fromVanillaFormat(Identifier.of("minecraft:illageralt"),
+                RawBitmapFontSerializer.write((BitmapFont) FontUtils.fromVanillaFormat(Identifier.parse("minecraft:illageralt"),
                         CanvasFont.Metadata.create("Illager Runes", List.of("Mojang Studios"), "Illager Runes from Minecraft Dungeons"),
                         vanillaZip), stream);
                 stream.close();

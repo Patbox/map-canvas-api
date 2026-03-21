@@ -9,7 +9,7 @@ import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import eu.pb4.mapcanvas.impl.image.FloydSteinbergDither;
 import eu.pb4.mapcanvas.impl.image.RawImage;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 
 
 // https://docs.oracle.com/javase/tutorial/2d/geometry/examples/ShapesDemo2D.java
@@ -236,7 +236,7 @@ public class AWTOracleShapesDemoRenderer implements ActiveRenderer {
     }
 
     @Override
-    public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {
+    public void onClick(ServerPlayer player, VirtualDisplay.ClickType type, int x, int y) {
 
     }
 }

@@ -25,9 +25,9 @@ public interface CanvasIcon {
     void setVisibility(boolean visibility);
 
     @Nullable
-    Component getText();
+    Component getName();
 
-    void setText(Component text);
+    void setName(Component text);
 
     <T extends DrawableCanvas & IconContainer> T getOwningCanvas();
 

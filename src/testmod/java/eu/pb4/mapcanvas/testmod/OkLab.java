@@ -1,14 +1,14 @@
 package eu.pb4.mapcanvas.testmod;
 
 import eu.pb4.placeholders.impl.GeneralUtils;
-import net.minecraft.util.math.ColorHelper;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.Mth;
 
 // https://bottosson.github.io/posts/oklab/
 public record OkLab(float l, float a, float b) {
     public static OkLab fromRgb(int rgb) {
-        return fromLinearSRGB(ColorHelper.getRed(rgb) / 255f, ColorHelper.getGreen(rgb) / 255f,
-                ColorHelper.getBlue(rgb) / 255f);
+        return fromLinearSRGB(ARGB.red(rgb) / 255f, ARGB.green(rgb) / 255f,
+                ARGB.blue(rgb) / 255f);
     }
 
     static float f(float x) {
@@ -56,9 +56,9 @@ public record OkLab(float l, float a, float b) {
         float s = s_*s_*s_;
 
         return GeneralUtils.rgbToInt(
-                 MathHelper.clamp(+4.0767416621f * l - 3.3077115913f * m + 0.2309699292f * s, 0, 1),
-                 MathHelper.clamp(-1.2684380046f * l + 2.6097574011f * m - 0.3413193965f * s, 0, 1),
-                 MathHelper.clamp(-0.0041960863f * l - 0.7034186147f * m + 1.7076147010f * s, 0, 1)
+                 Mth.clamp(+4.0767416621f * l - 3.3077115913f * m + 0.2309699292f * s, 0, 1),
+                 Mth.clamp(-1.2684380046f * l + 2.6097574011f * m - 0.3413193965f * s, 0, 1),
+                 Mth.clamp(-0.0041960863f * l - 0.7034186147f * m + 1.7076147010f * s, 0, 1)
         );
     }
 }

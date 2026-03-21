@@ -6,9 +6,8 @@ import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import eu.pb4.mapcanvas.testmod.OkLab;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.block.MapColor;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.ClickType;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.material.MapColor;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -36,7 +35,7 @@ public class DownSamplingRenderer implements ActiveRenderer {
 
         for (int i = 0; i < length; i++) {
             final var canvasColor = array[i];
-            if (canvasColor.getColor() == MapColor.CLEAR) {
+            if (canvasColor.getColor() == MapColor.NONE) {
                 continue;
             }
 
@@ -81,7 +80,7 @@ public class DownSamplingRenderer implements ActiveRenderer {
     }
 
     @Override
-    public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {
+    public void onClick(ServerPlayer player, VirtualDisplay.ClickType type, int x, int y) {
         if (this.image2 == null) {
             this.image2 = this.image1;
             var cache = new Int2ObjectOpenHashMap<CanvasColor>();

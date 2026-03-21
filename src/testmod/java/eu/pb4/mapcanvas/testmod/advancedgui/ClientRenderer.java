@@ -1,14 +1,13 @@
 package eu.pb4.mapcanvas.testmod.advancedgui;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.api.core.PlayerCanvas;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.util.ScreenshotRecorder;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.ClickType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Screenshot;
+import net.minecraft.server.level.ServerPlayer;
 
 public class ClientRenderer implements ActiveRenderer {
     private NativeImage source = null;
@@ -20,8 +19,8 @@ public class ClientRenderer implements ActiveRenderer {
 
     @Override
     public void render(PlayerCanvas outputCanvas, DrawableCanvas canvas, long time, int displayFps, int frame) {
-        MinecraftClient.getInstance().execute(() -> {
-           ScreenshotRecorder.takeScreenshot(MinecraftClient.getInstance().getFramebuffer(), nativeImage -> {
+        Minecraft.getInstance().execute(() -> {
+           Screenshot.takeScreenshot(Minecraft.getInstance().getMainRenderTarget(), nativeImage -> {
                var oldImage = this.source;
                this.source = nativeImage;
                if (oldImage != null) {
@@ -47,7 +46,7 @@ public class ClientRenderer implements ActiveRenderer {
                     int iY = (int) (y * scale);
 
                     if (iX >= 0 && iX < imageWidth && iY < imageHeight) {
-                        int color = this.source.getColorArgb(iX, iY);
+                        int color = this.source.getPixel(iX, iY);
 
                         final int redCanvas = (color) & 0xFF;
                         final int greenCanvas = (color >> 8) & 0xFF;
@@ -61,7 +60,7 @@ public class ClientRenderer implements ActiveRenderer {
     }
 
     @Override
-    public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {
+    public void onClick(ServerPlayer player, VirtualDisplay.ClickType type, int x, int y) {
 
     }
 }

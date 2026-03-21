@@ -311,12 +311,12 @@ public final class CanvasImage implements DrawableCanvas, IconContainer {
         }
 
         @Override
-        public Component getText() {
+        public Component getName() {
             return this.text;
         }
 
         @Override
-        public void setText(@Nullable Component text) {
+        public void setName(@Nullable Component text) {
             if (!Objects.equals(this.text, text)) {
                 this.text = text;
             }

@@ -6,7 +6,6 @@ import eu.pb4.mapcanvas.impl.MapIdManager;
 import eu.pb4.mapcanvas.impl.PlayerInterface;
 import eu.pb4.mapcanvas.mixin.EntityAccessor;
 import eu.pb4.mapcanvas.mixin.ItemFrameEntityAccessor;
-import eu.pb4.mapcanvas.mixin.PlayerInteractEntityC2SPacketAccessor;
 import io.netty.util.internal.shaded.org.jctools.util.UnsafeAccess;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -22,7 +21,6 @@ import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.math.*;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Rotation;
@@ -30,8 +28,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Matrix4d;
-import org.joml.Vector3d;
 
 import java.util.*;
 
@@ -61,11 +57,6 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         this.clickDetection = clickDetection;
     }
 
-    @Deprecated(forRemoval = true)
-    public static Builder builder() {
-        return new Builder();
-    }
-
     public static Builder builder(PlayerCanvas canvas, BlockPos pos, Direction direction) {
         return new Builder().canvas(canvas).pos(pos).direction(direction);
     }
@@ -77,25 +68,6 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
             e.printStackTrace();
             return null;
         }
-    }
-
-    @Deprecated(forRemoval = true)
-    public static VirtualDisplay of(PlayerCanvas canvas, BlockPos pos, Direction direction, int rotation, boolean glowing) {
-        return of(canvas, pos, direction, rotation, glowing, null);
-    }
-
-    @Deprecated(forRemoval = true)
-    public static VirtualDisplay of(PlayerCanvas canvas, BlockPos pos, Direction direction, int rotation, boolean glowing, @Nullable TypedInteractionCallback callback) {
-        if (canvas instanceof CombinedPlayerCanvas combinedCanvas) {
-            return new Combined(combinedCanvas, pos, glowing, direction, Math.abs(rotation % 4), true, callback != null ? ClickDetection.ENTITY : ClickDetection.NONE, callback);
-        } else {
-            return new Single(canvas, pos, glowing, direction, Math.abs(rotation % 4), true, callback != null ? ClickDetection.ENTITY : ClickDetection.NONE, callback);
-        }
-    }
-
-    @Deprecated(forRemoval = true)
-    public static VirtualDisplay of(PlayerCanvas canvas, BlockPos pos, Direction direction, int rotation, boolean glowing, @Nullable InteractionCallback callback) {
-        return of(canvas, pos, direction, rotation, glowing, (TypedInteractionCallback) callback);
     }
 
     public final void addPlayer(ServerPlayer player) {
@@ -111,7 +83,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         }
     }
 
-    private AABB getBox() {
+    private AABB getBoundingBox() {
         if (this.box == null && !this.clickableHolderById.isEmpty()) {
             double minX = Double.POSITIVE_INFINITY;
             double minY = Double.POSITIVE_INFINITY;
@@ -188,7 +160,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
                 Vec3 min = player.getEyePosition(0);
                 Vec3 rotVec = player.getViewVector(1.0F);
                 Vec3 max = min.add(rotVec.x * maxDistance, rotVec.y * maxDistance, rotVec.z * maxDistance);
-                AABB box2 = this.getBox();
+                AABB box2 = this.getBoundingBox();
                 if (this.invisible) {
                     box2 = box2.move(this.direction.getStepX() * -0.0625, this.direction.getStepY() * -0.0625,
                             this.direction.getStepZ() * -0.0625);
@@ -269,28 +241,6 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
         void onClick(ServerPlayer player, ClickType type, int x, int y);
     }
 
-    @Deprecated(forRemoval = true)
-    public interface TypedInteractionCallback extends DisplayInteractionCallback {
-        void onClick(ServerPlayer player, net.minecraft.world.inventory.ClickAction type, int x, int y);
-
-        @Override
-        default void onClick(ServerPlayer player, ClickType type, int x, int y) {
-            this.onClick(player, type == ClickType.RIGHT ? net.minecraft.world.inventory.ClickAction.SECONDARY : net.minecraft.world.inventory.ClickAction.PRIMARY, x, y);
-        }
-    }
-
-    @Deprecated(forRemoval = true)
-    public interface InteractionCallback extends TypedInteractionCallback {
-        void onClick(ServerPlayer player, int x, int y);
-
-        @Override
-        default void onClick(ServerPlayer player, ClickType type, int x, int y) {
-            if (type == ClickType.RIGHT) {
-                this.onClick(player, x, y);
-            }
-        }
-    }
-
     public static final class Builder {
         private PlayerCanvas canvas;
         private BlockPos pos;
@@ -368,15 +318,6 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
             this.callback = callback;
             if (this.clickDetection == ClickDetection.NONE) {
                 this.clickDetection = ClickDetection.RAYCAST;
-            }
-            return this;
-        }
-
-        @Deprecated(forRemoval = true)
-        public Builder callback(TypedInteractionCallback callback) {
-            this.callback = callback;
-            if (this.clickDetection == ClickDetection.NONE) {
-                this.clickDetection = ClickDetection.ENTITY;
             }
             return this;
         }

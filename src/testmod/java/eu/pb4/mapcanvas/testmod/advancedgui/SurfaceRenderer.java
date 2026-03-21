@@ -6,18 +6,17 @@ import eu.pb4.mapcanvas.api.core.PlayerCanvas;
 import eu.pb4.mapcanvas.api.font.DefaultFonts;
 import eu.pb4.mapcanvas.api.utils.ViewUtils;
 import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.ClickType;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.noise.SimplexNoiseSampler;
-import net.minecraft.util.math.random.Xoroshiro128PlusPlusRandom;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.levelgen.XoroshiroRandomSource;
+import net.minecraft.world.level.levelgen.synth.SimplexNoise;
 
 
 public class SurfaceRenderer implements ActiveRenderer {
-    private final SimplexNoiseSampler noise;
+    private final SimplexNoise noise;
 
     public SurfaceRenderer() {
-        this.noise = new SimplexNoiseSampler(new Xoroshiro128PlusPlusRandom(1));
+        this.noise = new SimplexNoise(new XoroshiroRandomSource(1));
     }
     
     @Override
@@ -34,7 +33,7 @@ public class SurfaceRenderer implements ActiveRenderer {
             for (int y = 0; y < height; y++) {
                 var color = CanvasColor.values()[(int) ((
                                         (
-                                                (this.noise.sample((x / 80d + sin *2) + Math.sin(y / 40d), y / 80d + (time / 1000d) % 3600 + Math.sin(x / 40d) * 2, (time / 600d) % 3600)
+                                                (this.noise.getValue((x / 80d + sin *2) + Math.sin(y / 40d), y / 80d + (time / 1000d) % 3600 + Math.sin(x / 40d) * 2, (time / 600d) % 3600)
                                         ) * 8 + time / 400) % colorSize) + 4)];
 
 
@@ -58,14 +57,14 @@ public class SurfaceRenderer implements ActiveRenderer {
             }
         });
 
-        var font = DefaultFonts.REGISTRY.getFontOrElse(Identifier.of("roboto", "bold/aa"), DefaultFonts.UNSANDED);
+        var font = DefaultFonts.REGISTRY.getFontOrElse(Identifier.fromNamespaceAndPath("roboto", "bold/aa"), DefaultFonts.UNSANDED);
 
         font.drawText(textView, text, 17, 17, 32, CanvasColor.GRAY_HIGH);
         font.drawText(textView, text, 16, 16, 32, CanvasColor.WHITE_HIGH);
     }
 
     @Override
-    public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {
+    public void onClick(ServerPlayer player, VirtualDisplay.ClickType type, int x, int y) {
 
     }
 }

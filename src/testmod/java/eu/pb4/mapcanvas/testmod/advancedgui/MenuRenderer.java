@@ -1,5 +1,6 @@
 package eu.pb4.mapcanvas.testmod.advancedgui;
 
+import com.mojang.datafixers.util.Pair;
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.api.core.PlayerCanvas;
@@ -9,9 +10,7 @@ import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import eu.pb4.mapcanvas.impl.font.serialization.UniHexFontReader;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.ClickType;
-import net.minecraft.util.Pair;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -50,18 +49,18 @@ public class MenuRenderer implements ActiveRenderer {
         for (var pair : this.renderers) {
             int y = 16 + i * 20 - this.scroll;
             if (y > -15 && y < renderHeight) {
-                font.drawText(canvas, "» " + pair.getLeft(), 16, y, 16, CanvasColor.BLACK_NORMAL);
+                font.drawText(canvas, "» " + pair.getFirst(), 16, y, 16, CanvasColor.BLACK_NORMAL);
             }
             i++;
         }
     }
 
     @Override
-    public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {
+    public void onClick(ServerPlayer player, VirtualDisplay.ClickType type, int x, int y) {
         var index = (y + this.scroll - 16) / 20;
 
         if (index >= 0 && index < this.renderers.size() ) {
-            this.setRenderer.accept(this.renderers.get(index).getRight());
+            this.setRenderer.accept(this.renderers.get(index).getSecond());
         }
     }
 }

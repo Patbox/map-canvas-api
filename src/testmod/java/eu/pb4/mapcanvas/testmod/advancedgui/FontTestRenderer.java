@@ -9,11 +9,10 @@ import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import eu.pb4.placeholders.api.ParserContext;
 import eu.pb4.placeholders.api.parsers.TagParser;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.StyleSpriteSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.ClickType;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +20,7 @@ import java.util.List;
 
 public class FontTestRenderer implements ActiveRenderer {
     public static final List<CanvasFont> FONTS = new ArrayList<>();
-    private Text userText = Text.empty();
+    private Component userText = Component.empty();
     @Override
     public void setup(PlayerCanvas canvas) {
 
@@ -77,22 +76,22 @@ public class FontTestRenderer implements ActiveRenderer {
         font.drawText(canvas, "Zażółć gęślą jaźń", 16, i, 16, CanvasColor.BLACK_HIGH);
         i += 16 + 4;
 
-        DefaultFonts.REGISTRY.drawText(canvas, this.userText, 16, i, 32, CanvasColor.BLACK_HIGH, CanvasColor.CLEAR, 2);
+        DefaultFonts.REGISTRY.drawComponent(canvas, this.userText, 16, i, 32, CanvasColor.BLACK_HIGH, CanvasColor.CLEAR, 2);
         i += 32 + 4;
 
-        var fontId = this.userText.getStyle().getFont() instanceof StyleSpriteSource.Font font1 ? font1.id() : Identifier.of("default");
+        var fontId = this.userText.getStyle().getFont() instanceof FontDescription.Resource font1 ? font1.id() : Identifier.withDefaultNamespace("default");
         DefaultFonts.REGISTRY.getFont(fontId).drawText(canvas, this.userText.getString(), 16, i, 32, CanvasColor.BLACK_HIGH);
 
         DefaultFonts.VANILLA.drawText(canvas, "" + displayFps, 2, canvas.getHeight() - 10, 8, CanvasColor.GRAY_HIGH);    }
 
     @Override
-    public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {
+    public void onClick(ServerPlayer player, VirtualDisplay.ClickType type, int x, int y) {
 
     }
 
     @Override
-    public void onInput(ServerPlayerEntity player, String input) {
-        this.userText = TagParser.QUICK_TEXT.parseText(input, ParserContext.of());
+    public void onInput(ServerPlayer player, String input) {
+        this.userText = TagParser.QUICK_TEXT.parseComponent(input, ParserContext.of());
     }
 
     static {

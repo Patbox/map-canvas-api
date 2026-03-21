@@ -1,12 +1,11 @@
 plugins {
-	id 'fabric-loom' version '1.13.+'
+	id 'net.fabricmc.fabric-loom' version "1.15-SNAPSHOT"
 	id 'maven-publish'
 }
 
-sourceCompatibility = JavaVersion.VERSION_21
-targetCompatibility = JavaVersion.VERSION_21
-
-archivesBaseName = project.archives_base_name
+base {
+	archivesName = project.archives_base_name
+}
 version = project.mod_version
 group = project.maven_group
 
@@ -49,23 +48,22 @@ loom {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
-	modCompileOnly modLocalRuntime("net.fabricmc.fabric-api:fabric-api:${project.fabric_version}")
+	compileOnly localRuntime("net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}")
 
 
 	//modRuntime "com.github.SuperCoder7979:databreaker:0.2.6"
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
 	// You may need to force-disable transitiveness on them.
-	modCompileOnly modLocalRuntime("eu.pb4:polymer-common:0.15.0-beta.4+1.21.11-rc2")
-	modCompileOnly modLocalRuntime("eu.pb4:placeholder-api:2.8.1+1.21.10")
-	modCompileOnly modLocalRuntime("org.openjdk.jol:jol-core:0.10")
+	compileOnly localRuntime("eu.pb4:polymer-common:0.16.0-pre.1+26.1-rc-2")
+	compileOnly localRuntime("eu.pb4:placeholder-api:3.0.0-beta.2+26.1")
+	compileOnly localRuntime("org.openjdk.jol:jol-core:0.10")
 
 
-	modCompileOnly modLocalRuntime('org.seleniumhq.selenium:selenium-java:4.3.0') {
+	compileOnly localRuntime('org.seleniumhq.selenium:selenium-java:4.3.0') {
 		exclude group: 'io.netty', module: 'netty-transport-native-epoll'
 		exclude group: 'io.netty', module: 'netty-transport-native-kqueue'
 	}
@@ -89,7 +87,7 @@ tasks.withType(JavaCompile).configureEach {
 	it.options.encoding = "UTF-8"
 
 
-	it.options.release = 21
+	it.options.release = 25
 
 }
 
@@ -102,7 +100,7 @@ java {
 
 jar {
 	from("LICENSE") {
-		rename { "${it}_${project.archivesBaseName}"}
+		rename { "${it}_${project.archives_base_name}"}
 	}
 }
 
@@ -113,11 +111,11 @@ publishing {
 	publications {
 		mavenJava(MavenPublication) {
 			// add all the jars that should be included when publishing to maven
-			artifact(remapJar) {
-				builtBy remapJar
+			artifact(jar) {
+				builtBy jar
 			}
 			artifact(sourcesJar) {
-				builtBy remapSourcesJar
+				builtBy sourcesJar
 			}
 		}
 	}
@@ -150,9 +148,4 @@ task testmodJar(type: Jar) {
 	archiveClassifier = "testmod"
 }
 
-task remapTestmodJar(type: net.fabricmc.loom.task.RemapJarTask, dependsOn: testmodJar) {
-	input = testmodJar.archiveFile
-	archiveClassifier = "testmod"
-	addNestedDependencies = false
-}
-build.dependsOn remapTestmodJar
+//build.dependsOn testmodJar

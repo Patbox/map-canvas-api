@@ -71,8 +71,8 @@ public final class FontRegistry {
      * @param size font size, in pixels
      * @param defaultColor default color to use
      */
-    public void drawText(DrawableCanvas canvas, Component text, int x, int y, double size, CanvasColor defaultColor) {
-        drawText(canvas, text, x, y, size, defaultColor, CanvasColor.CLEAR);
+    public void drawComponent(DrawableCanvas canvas, Component text, int x, int y, double size, CanvasColor defaultColor) {
+        drawComponent(canvas, text, x, y, size, defaultColor, CanvasColor.CLEAR);
     }
 
     /**
@@ -86,8 +86,8 @@ public final class FontRegistry {
      * @param defaultColor default color to use
      * @param shadowColor default shadow color to use
      */
-    public void drawText(DrawableCanvas canvas, Component text, int x, int y, double size, CanvasColor defaultColor, CanvasColor shadowColor) {
-        this.drawText(canvas, text, x, y, size, defaultColor, shadowColor, (int) (size / 8));
+    public void drawComponent(DrawableCanvas canvas, Component text, int x, int y, double size, CanvasColor defaultColor, CanvasColor shadowColor) {
+        this.drawComponent(canvas, text, x, y, size, defaultColor, shadowColor, (int) (size / 8));
     }
     /**
      * Draws text into canvas
@@ -101,7 +101,7 @@ public final class FontRegistry {
      * @param shadowColor default shadow color to use
      * @param shadowOffset offset of shadow form main text, in pixels
      */
-    public void drawText(DrawableCanvas canvas, Component text, int x, int y, double size, CanvasColor defaultColor, CanvasColor shadowColor, int shadowOffset) {
+    public void drawComponent(DrawableCanvas canvas, Component text, int x, int y, double size, CanvasColor defaultColor, CanvasColor shadowColor, int shadowOffset) {
         final var pixel = (int) (size / 8);
         text.getVisualOrderText().accept(new FormattedCharSink() {
             private int posX = 0;

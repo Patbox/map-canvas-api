@@ -7,7 +7,7 @@ import eu.pb4.mapcanvas.api.core.PlayerCanvas;
 import eu.pb4.mapcanvas.api.font.DefaultFonts;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -48,7 +48,7 @@ public class BrowserTestRenderer implements ActiveRenderer {
     }
 
     @Override
-    public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {
+    public void onClick(ServerPlayer player, VirtualDisplay.ClickType type, int x, int y) {
         try {
             var mouse = new PointerInput(PointerInput.Kind.MOUSE, "default mouse");
 
@@ -71,7 +71,7 @@ public class BrowserTestRenderer implements ActiveRenderer {
     }
 
     @Override
-    public void onInput(ServerPlayerEntity player, String input) {
+    public void onInput(ServerPlayer player, String input) {
         new Actions(this.driver).sendKeys(input).perform();
     }
 

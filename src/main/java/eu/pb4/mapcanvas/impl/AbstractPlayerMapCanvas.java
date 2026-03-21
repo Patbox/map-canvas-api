@@ -45,7 +45,7 @@ public abstract class AbstractPlayerMapCanvas extends BaseMapCanvas implements P
 
         for (var icon : this.icons) {
             if (icon.isVisible()) {
-                icons.add(new MapDecoration(icon.getType(), (byte) (icon.getX() - 128), (byte) (icon.getY() - 128), icon.getRotation(), Optional.ofNullable(icon.getText())));
+                icons.add(new MapDecoration(icon.getType(), (byte) (icon.getX() - 128), (byte) (icon.getY() - 128), icon.getRotation(), Optional.ofNullable(icon.getName())));
             }
         }
 
@@ -58,7 +58,7 @@ public abstract class AbstractPlayerMapCanvas extends BaseMapCanvas implements P
     }
 
     @Override
-    public MapId getIdComponent() {
+    public MapId getMapId() {
         return this.mapIdComponent;
     }
 
@@ -138,7 +138,7 @@ public abstract class AbstractPlayerMapCanvas extends BaseMapCanvas implements P
             icons = new ArrayList<>();
             for (var icon : this.icons) {
                 if (icon.isVisible()) {
-                    icons.add(new MapDecoration(icon.getType(), (byte) (icon.getX() - 128), (byte) (icon.getY() - 128), icon.getRotation(), Optional.ofNullable(icon.getText())));
+                    icons.add(new MapDecoration(icon.getType(), (byte) (icon.getX() - 128), (byte) (icon.getY() - 128), icon.getRotation(), Optional.ofNullable(icon.getName())));
                 }
             }
         } else {

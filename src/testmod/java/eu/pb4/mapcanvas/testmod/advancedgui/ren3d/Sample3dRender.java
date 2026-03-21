@@ -4,8 +4,7 @@ import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.api.core.PlayerCanvas;
 import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import eu.pb4.mapcanvas.testmod.advancedgui.ActiveRenderer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.ClickType;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.nio.FloatBuffer;
 
@@ -22,7 +21,7 @@ public class Sample3dRender implements ActiveRenderer {
     }
 
     @Override
-    public void onClick(ServerPlayerEntity player, VirtualDisplay.ClickType type, int x, int y) {
+    public void onClick(ServerPlayer player, VirtualDisplay.ClickType type, int x, int y) {
 
     }
 

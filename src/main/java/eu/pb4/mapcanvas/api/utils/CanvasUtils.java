@@ -71,7 +71,7 @@ public final class CanvasUtils {
 
         if (canvas instanceof IconContainer container && source instanceof IconContainer sourceContainer) {
             for (var icon : sourceContainer.getIcons()) {
-                container.createIcon(icon.getType(), icon.isVisible(), icon.getX(), icon.getY(), icon.getRotation(), icon.getText());
+                container.createIcon(icon.getType(), icon.isVisible(), icon.getX(), icon.getY(), icon.getRotation(), icon.getName());
             }
         }
     }
@@ -97,7 +97,7 @@ public final class CanvasUtils {
         }
         if (canvas instanceof IconContainer container && source instanceof IconContainer sourceContainer) {
             for (var icon : sourceContainer.getIcons()) {
-                container.createIcon(icon.getType(), icon.isVisible(), (int) (icon.getX() * deltaX), (int) (icon.getY() * deltaY), icon.getRotation(), icon.getText());
+                container.createIcon(icon.getType(), icon.isVisible(), (int) (icon.getX() * deltaX), (int) (icon.getY() * deltaY), icon.getRotation(), icon.getName());
             }
         }
     }
@@ -175,8 +175,8 @@ public final class CanvasUtils {
                     iconNbt.putInt("X", icon.getX());
                     iconNbt.putInt("Y", icon.getY());
                     iconNbt.putByte("Rot", icon.getRotation());
-                    if (icon.getText() != null) {
-                        iconNbt.putString("Text", ComponentSerialization.CODEC.encodeStart(lookup.createSerializationContext(JsonOps.INSTANCE), icon.getText()).getOrThrow().toString());
+                    if (icon.getName() != null) {
+                        iconNbt.putString("Text", ComponentSerialization.CODEC.encodeStart(lookup.createSerializationContext(JsonOps.INSTANCE), icon.getName()).getOrThrow().toString());
                     }
 
                     icons.add(iconNbt);

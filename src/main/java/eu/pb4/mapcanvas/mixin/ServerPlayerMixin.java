@@ -19,7 +19,7 @@ import java.util.Set;
 import net.minecraft.server.level.ServerPlayer;
 
 @Mixin(ServerPlayer.class)
-public class ServerPlayerEntityMixin implements PlayerInterface {
+public class ServerPlayerMixin implements PlayerInterface {
     private final Int2ObjectMap<VirtualDisplay> mapcanvas_displays = new Int2ObjectOpenHashMap<>();
 
     @Override

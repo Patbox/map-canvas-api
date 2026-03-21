@@ -197,7 +197,7 @@ public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
     }
 
     @Override
-    public MapId getIdComponent() {
+    public MapId getMapId() {
         return null;
     }
 
@@ -266,7 +266,7 @@ public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
                 this.x = newX;
                 this.y = newY;
                 this.icon.remove();
-                this.icon = MultiMapCanvasImpl.this.getSubCanvas(newX, newY).createIcon(this.icon.getType(), this.icon.isVisible(), x % CanvasUtils.MAP_ICON_SIZE, y % CanvasUtils.MAP_ICON_SIZE, rotation, this.icon.getText());
+                this.icon = MultiMapCanvasImpl.this.getSubCanvas(newX, newY).createIcon(this.icon.getType(), this.icon.isVisible(), x % CanvasUtils.MAP_ICON_SIZE, y % CanvasUtils.MAP_ICON_SIZE, rotation, this.icon.getName());
             } else {
                 this.icon.move(x % CanvasUtils.MAP_ICON_SIZE, y % CanvasUtils.MAP_ICON_SIZE, rotation);
             }
@@ -283,13 +283,13 @@ public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
         }
 
         @Override
-        public @Nullable Component getText() {
-            return this.icon.getText();
+        public @Nullable Component getName() {
+            return this.icon.getName();
         }
 
         @Override
-        public void setText(Component text) {
-            this.icon.setText(text);
+        public void setName(Component text) {
+            this.icon.setName(text);
         }
 
         @Override
