@@ -4,14 +4,11 @@ import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.impl.font.BitmapFont;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.resources.Identifier;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -31,7 +28,7 @@ public class VanillaFontReader {
                 var json = JsonParser.parseString(new String(stream.readAllBytes()));
                 stream.close();
 
-                lines.add(TextCodecs.CODEC.decode(JsonOps.INSTANCE, json.getAsJsonObject().get("pack").getAsJsonObject().get("description")).result().orElseThrow().getFirst().getString());
+                lines.add(ComponentSerialization.CODEC.decode(JsonOps.INSTANCE, json.getAsJsonObject().get("pack").getAsJsonObject().get("description")).result().orElseThrow().getFirst().getString());
             } catch (Exception e) {
 
             }
@@ -72,7 +69,7 @@ public class VanillaFontReader {
                         var type = obj.getAsJsonPrimitive("type").getAsString();
                         switch (type) {
                             case "bitmap" -> {
-                                var path = Identifier.of(obj.getAsJsonPrimitive("file").getAsString());
+                                var path = Identifier.parse(obj.getAsJsonPrimitive("file").getAsString());
                                 var ascent = obj.getAsJsonPrimitive("ascent").getAsInt();
                                 var height = 8;
                                 try {

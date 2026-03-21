@@ -1,24 +1,24 @@
 package eu.pb4.mapcanvas.mixin;
 
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.decoration.InteractionEntity;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.world.entity.Interaction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(InteractionEntity.class)
+@Mixin(Interaction.class)
 public interface InteractionEntityAccessor {
     @Accessor
-    static TrackedData<Float> getWIDTH() {
+    static EntityDataAccessor<Float> getDATA_WIDTH_ID() {
         throw new UnsupportedOperationException();
     }
 
     @Accessor
-    static TrackedData<Float> getHEIGHT() {
+    static EntityDataAccessor<Float> getDATA_HEIGHT_ID() {
         throw new UnsupportedOperationException();
     }
 
     @Accessor
-    static TrackedData<Boolean> getRESPONSE() {
+    static EntityDataAccessor<Boolean> getDATA_RESPONSE_ID() {
         throw new UnsupportedOperationException();
     }
 }

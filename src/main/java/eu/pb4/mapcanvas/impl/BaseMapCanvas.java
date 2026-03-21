@@ -4,13 +4,13 @@ import eu.pb4.mapcanvas.api.core.CanvasIcon;
 import eu.pb4.mapcanvas.api.core.IconContainer;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
-import net.minecraft.item.map.MapDecorationType;
-import net.minecraft.item.map.MapDecorationTypes;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.saveddata.maps.MapDecorationType;
+import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
 
 public abstract class BaseMapCanvas implements DrawableCanvas, IconContainer {
     protected final byte[] data = new byte[CanvasUtils.MAP_DATA_SIZE * CanvasUtils.MAP_DATA_SIZE];
@@ -61,7 +61,7 @@ public abstract class BaseMapCanvas implements DrawableCanvas, IconContainer {
     }
 
     @Override
-    public CanvasIcon createIcon(RegistryEntry<MapDecorationType> type, boolean visible, int x, int y, byte rotation, @Nullable Text text) {
+    public CanvasIcon createIcon(Holder<MapDecorationType> type, boolean visible, int x, int y, byte rotation, @Nullable Component text) {
         var icon = new SimpleCanvasIcon(this.iconId++, visible, type, x, y, rotation, text);
         this.icons.add(icon);
 
@@ -80,8 +80,8 @@ public abstract class BaseMapCanvas implements DrawableCanvas, IconContainer {
 
     public final class SimpleCanvasIcon implements CanvasIcon {
         public final int id;
-        private Text text;
-        private RegistryEntry<MapDecorationType> type = MapDecorationTypes.PLAYER;
+        private Component text;
+        private Holder<MapDecorationType> type = MapDecorationTypes.PLAYER;
         private int x = 0;
         private int y = 0;
         private byte rotation = 0;
@@ -91,7 +91,7 @@ public abstract class BaseMapCanvas implements DrawableCanvas, IconContainer {
             this.id = id;
         }
 
-        protected SimpleCanvasIcon(int id, boolean visible, RegistryEntry<MapDecorationType> type, int x, int y, byte rotation, @Nullable Text text) {
+        protected SimpleCanvasIcon(int id, boolean visible, Holder<MapDecorationType> type, int x, int y, byte rotation, @Nullable Component text) {
             this.id = id;
             this.type = type;
             this.x = x;
@@ -102,12 +102,12 @@ public abstract class BaseMapCanvas implements DrawableCanvas, IconContainer {
         }
 
         @Override
-        public RegistryEntry<MapDecorationType> getType() {
+        public Holder<MapDecorationType> getType() {
             return this.type;
         }
 
         @Override
-        public void setType(RegistryEntry<MapDecorationType> type) {
+        public void setType(Holder<MapDecorationType> type) {
             if (this.type != type) {
                 this.type = type;
                 BaseMapCanvas.this.markIconsDirty();
@@ -153,12 +153,12 @@ public abstract class BaseMapCanvas implements DrawableCanvas, IconContainer {
         }
 
         @Override
-        public Text getText() {
+        public Component getText() {
             return this.text;
         }
 
         @Override
-        public void setText(@Nullable Text text) {
+        public void setText(@Nullable Component text) {
             if (!Objects.equals(this.text, text)) {
                 this.text = text;
                 BaseMapCanvas.this.markIconsDirty();

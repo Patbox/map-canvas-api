@@ -1,22 +1,21 @@
 package eu.pb4.mapcanvas.impl;
 
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import java.util.ArrayList;
 
 public final class SingleMapCanvas extends AbstractPlayerMapCanvas {
-    private final Set<ServerPlayNetworkHandler> players = Collections.synchronizedSet(new HashSet<>());
+    private final Set<ServerGamePacketListenerImpl> players = Collections.synchronizedSet(new HashSet<>());
 
     public SingleMapCanvas(int id) {
         super(id);
     }
 
     @Override
-    protected Collection<ServerPlayNetworkHandler> getPlayers() {
+    protected Collection<ServerGamePacketListenerImpl> getPlayers() {
         return this.players;
     }
 

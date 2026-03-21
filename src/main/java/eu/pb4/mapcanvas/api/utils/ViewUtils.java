@@ -2,7 +2,7 @@ package eu.pb4.mapcanvas.api.utils;
 
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.impl.view.*;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
 import org.joml.Matrix3x2f;
 import org.joml.Matrix3x2fc;
 import org.joml.Vector2f;
@@ -70,26 +70,26 @@ public final class ViewUtils {
         var vec = new Vector2f(0, 0);
         {
             matrix3x2f.transformPosition(vec);
-            width = Math.max(width, MathHelper.ceil(vec.x));
-            height = Math.max(height, MathHelper.ceil(vec.y));
+            width = Math.max(width, Mth.ceil(vec.x));
+            height = Math.max(height, Mth.ceil(vec.y));
         }
         {
             vec.set(0, source.getHeight());
             matrix3x2f.transformPosition(vec);
-            width = Math.max(width, MathHelper.ceil(vec.x));
-            height = Math.max(height, MathHelper.ceil(vec.y));
+            width = Math.max(width, Mth.ceil(vec.x));
+            height = Math.max(height, Mth.ceil(vec.y));
         }
         {
             vec.set(source.getWidth(), 0);
             matrix3x2f.transformPosition(vec);
-            width = Math.max(width, MathHelper.ceil(vec.x));
-            height = Math.max(height, MathHelper.ceil(vec.y));
+            width = Math.max(width, Mth.ceil(vec.x));
+            height = Math.max(height, Mth.ceil(vec.y));
         }
         {
             vec.set(source.getWidth(), source.getHeight());
             matrix3x2f.transformPosition(vec);
-            width = Math.max(width, MathHelper.ceil(vec.x));
-            height = Math.max(height, MathHelper.ceil(vec.y));
+            width = Math.max(width, Mth.ceil(vec.x));
+            height = Math.max(height, Mth.ceil(vec.y));
         }
 
         return new Matrix3x2fTransformedView(source, width, height, new Matrix3x2f(matrix3x2f).invert(), vec);

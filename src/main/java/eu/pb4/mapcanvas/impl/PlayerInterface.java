@@ -2,7 +2,6 @@ package eu.pb4.mapcanvas.impl;
 
 import eu.pb4.mapcanvas.api.utils.VirtualDisplay;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.minecraft.util.math.Box;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;

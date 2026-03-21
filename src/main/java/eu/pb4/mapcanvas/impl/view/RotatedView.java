@@ -1,7 +1,7 @@
 package eu.pb4.mapcanvas.impl.view;
 
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
 
 public class RotatedView implements DrawableCanvas {
     private final int width;
@@ -30,19 +30,19 @@ public class RotatedView implements DrawableCanvas {
                 var currentHeight = -this.sin * x + this.cos * y;
 
                 if (currentHeight > maxHeight) {
-                    maxHeight = MathHelper.ceil(currentHeight);
+                    maxHeight = Mth.ceil(currentHeight);
                 }
 
                 if (currentWidth > maxWidth) {
-                    maxWidth = MathHelper.ceil(currentWidth);
+                    maxWidth = Mth.ceil(currentWidth);
                 }
 
                 if (currentHeight < minHeight) {
-                    minHeight = MathHelper.floor(currentHeight);
+                    minHeight = Mth.floor(currentHeight);
                 }
 
                 if (currentWidth < minWidth) {
-                    minWidth = MathHelper.floor(currentWidth);
+                    minWidth = Mth.floor(currentWidth);
                 }
             }
         }

@@ -4,7 +4,6 @@ import eu.pb4.mapcanvas.impl.font.*;
 import eu.pb4.mapcanvas.impl.font.serialization.RawBitmapFontSerializer;
 import eu.pb4.mapcanvas.impl.font.serialization.UniHexFontReader;
 import eu.pb4.mapcanvas.impl.font.serialization.VanillaFontReader;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Font;
@@ -15,6 +14,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.zip.ZipFile;
+import net.minecraft.resources.Identifier;
 
 public final class FontUtils {
     private FontUtils() {}

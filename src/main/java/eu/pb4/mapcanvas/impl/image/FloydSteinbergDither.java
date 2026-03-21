@@ -2,8 +2,8 @@ package eu.pb4.mapcanvas.impl.image;
 
 import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
-import net.minecraft.util.math.ColorHelper;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.Mth;
 
 public class FloydSteinbergDither {
     public static CanvasColor sample(RawImage scratchImg, int x, int y, CanvasUtils.ColorMapper mapper) {
@@ -11,9 +11,9 @@ public class FloydSteinbergDither {
         var closestColor = CanvasColor.getFromRaw(mapper.getRawColor(imageColor));
         var palletedColor = closestColor.getRgbColor();
 
-        var errorR = ColorHelper.getRed(imageColor) - ColorHelper.getRed(palletedColor);
-        var errorG = ColorHelper.getGreen(imageColor) - ColorHelper.getGreen(palletedColor);
-        var errorB = ColorHelper.getBlue(imageColor) - ColorHelper.getBlue(palletedColor);
+        var errorR = ARGB.red(imageColor) - ARGB.red(palletedColor);
+        var errorG = ARGB.green(imageColor) - ARGB.green(palletedColor);
+        var errorB = ARGB.blue(imageColor) - ARGB.blue(palletedColor);
         if (scratchImg.width() > x + 1) {
             scratchImg.set(x + 1, y, applyError(scratchImg.get(x + 1, y), errorR, errorG, errorB, 7.0 / 16.0));
         }
@@ -31,9 +31,9 @@ public class FloydSteinbergDither {
     }
 
     private static int applyError(int pixelColor, int errorR, int errorG, int errorB, double quantConst) {
-        int pR = MathHelper.clamp( ColorHelper.getRed(pixelColor) + (int) ((double) errorR * quantConst), 0, 255);
-        int pG = MathHelper.clamp(ColorHelper.getGreen(pixelColor) + (int) ((double) errorG * quantConst), 0, 255);
-        int pB = MathHelper.clamp(ColorHelper.getBlue(pixelColor) + (int) ((double) errorB * quantConst), 0, 255);
-        return ColorHelper.getArgb(ColorHelper.getAlpha(pixelColor), pR, pG, pB);
+        int pR = Mth.clamp( ARGB.red(pixelColor) + (int) ((double) errorR * quantConst), 0, 255);
+        int pG = Mth.clamp(ARGB.green(pixelColor) + (int) ((double) errorG * quantConst), 0, 255);
+        int pB = Mth.clamp(ARGB.blue(pixelColor) + (int) ((double) errorB * quantConst), 0, 255);
+        return ARGB.color(ARGB.alpha(pixelColor), pR, pG, pB);
     }
 }

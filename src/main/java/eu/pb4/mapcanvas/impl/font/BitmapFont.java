@@ -6,10 +6,10 @@ import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.api.font.FontUtils;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Arrays;
+import net.minecraft.util.Mth;
 
 public final class BitmapFont implements CanvasFont {
     public static final BitmapFont EMPTY = new BitmapFont(Glyph.INVALID, Metadata.empty());
@@ -123,8 +123,8 @@ public final class BitmapFont implements CanvasFont {
                         for (int lX = 0; lX < baseScale; lX++) {
                             for (int lY = 0; lY < baseScale; lY++) {
                                 canvas.set(
-                                        x + MathHelper.floor(fX * baseScale) + lX,
-                                        y + MathHelper.floor((fY + (7 - this.ascend()) * textureScale) * baseScale) + lY,
+                                        x + Mth.floor(fX * baseScale) + lX,
+                                        y + Mth.floor((fY + (7 - this.ascend()) * textureScale) * baseScale) + lY,
                                         color
                                 );
                             }

@@ -5,17 +5,17 @@ import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
 import eu.pb4.mapcanvas.api.utils.ViewUtils;
 import eu.pb4.mapcanvas.impl.font.BitmapFont;
-import net.minecraft.text.CharacterVisitor;
-import net.minecraft.text.Style;
-import net.minecraft.text.StyleSpriteSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.FormattedCharSink;
 
 public final class FontRegistry {
     private final Identifier defaultFontId;
@@ -23,7 +23,7 @@ public final class FontRegistry {
     private CanvasFont defaultFont = BitmapFont.EMPTY;
 
     public FontRegistry() {
-        this.defaultFontId = Identifier.of("minecraft:default");
+        this.defaultFontId = Identifier.parse("minecraft:default");
     }
 
     public FontRegistry(Identifier defaultFont) {
@@ -71,7 +71,7 @@ public final class FontRegistry {
      * @param size font size, in pixels
      * @param defaultColor default color to use
      */
-    public void drawText(DrawableCanvas canvas, Text text, int x, int y, double size, CanvasColor defaultColor) {
+    public void drawText(DrawableCanvas canvas, Component text, int x, int y, double size, CanvasColor defaultColor) {
         drawText(canvas, text, x, y, size, defaultColor, CanvasColor.CLEAR);
     }
 
@@ -86,7 +86,7 @@ public final class FontRegistry {
      * @param defaultColor default color to use
      * @param shadowColor default shadow color to use
      */
-    public void drawText(DrawableCanvas canvas, Text text, int x, int y, double size, CanvasColor defaultColor, CanvasColor shadowColor) {
+    public void drawText(DrawableCanvas canvas, Component text, int x, int y, double size, CanvasColor defaultColor, CanvasColor shadowColor) {
         this.drawText(canvas, text, x, y, size, defaultColor, shadowColor, (int) (size / 8));
     }
     /**
@@ -101,20 +101,20 @@ public final class FontRegistry {
      * @param shadowColor default shadow color to use
      * @param shadowOffset offset of shadow form main text, in pixels
      */
-    public void drawText(DrawableCanvas canvas, Text text, int x, int y, double size, CanvasColor defaultColor, CanvasColor shadowColor, int shadowOffset) {
+    public void drawText(DrawableCanvas canvas, Component text, int x, int y, double size, CanvasColor defaultColor, CanvasColor shadowColor, int shadowOffset) {
         final var pixel = (int) (size / 8);
-        text.asOrderedText().accept(new CharacterVisitor() {
+        text.getVisualOrderText().accept(new FormattedCharSink() {
             private int posX = 0;
 
             @Override
             public boolean accept(int index, Style style, int codePoint) {
                 var startX = posX;
-                var color = style.getColor() != null ? CanvasUtils.findClosestColor(style.getColor().getRgb()) : defaultColor;
+                var color = style.getColor() != null ? CanvasUtils.findClosestColor(style.getColor().getValue()) : defaultColor;
                 var shadow = style.getShadowColor() != null ? CanvasUtils.findClosestColorARGB(style.getShadowColor())
                         : shadowColor == CanvasColor.CLEAR_FORCE ?
-                        CanvasUtils.findClosestColor(ColorHelper.scaleRgb(style.getColor() != null ? style.getColor().getRgb() : defaultColor.getRgbColor(), 0.25f)) : shadowColor;
+                        CanvasUtils.findClosestColor(ARGB.scaleRGB(style.getColor() != null ? style.getColor().getValue() : defaultColor.getRgbColor(), 0.25f)) : shadowColor;
 
-                if (style.getFont() instanceof StyleSpriteSource.Font font1) {
+                if (style.getFont() instanceof FontDescription.Resource font1) {
                     var font = FontRegistry.this.getDefaultedFont(font1.id());
                     var yPos = y;
 
@@ -144,7 +144,7 @@ public final class FontRegistry {
                         posX++;
                     }
                 } else {
-                    var glyph = style.getFont() instanceof StyleSpriteSource.Player ? BitmapFont.Glyph.PLAYER : BitmapFont.Glyph.ATLAS;
+                    var glyph = style.getFont() instanceof FontDescription.PlayerSprite ? BitmapFont.Glyph.PLAYER : BitmapFont.Glyph.ATLAS;
                     if (shadow != CanvasColor.CLEAR) {
                         glyph.draw(canvas,x + posX + shadowOffset, y + shadowOffset, size, 0, shadow);
                     }
@@ -175,27 +175,27 @@ public final class FontRegistry {
         });
     }
 
-    public int getWidth(Text text, double size) {
-        var tmp = new CharacterVisitor() {
+    public int getWidth(Component text, double size) {
+        var tmp = new FormattedCharSink() {
             private int posX = 0;
 
             @Override
             public boolean accept(int index, Style style, int codePoint) {
-                if (style.getFont() instanceof StyleSpriteSource.Font font1) {
+                if (style.getFont() instanceof FontDescription.Resource font1) {
                     var font = FontRegistry.this.getDefaultedFont(font1.id());
                     posX += font.getGlyphWidth(codePoint, size, style.isBold() ? 3 : 2);
                     if (codePoint == ' ' && style.isBold()) {
                         posX++;
                     }
                 } else {
-                    var glyph = style.getFont() instanceof StyleSpriteSource.Player ? BitmapFont.Glyph.PLAYER : BitmapFont.Glyph.ATLAS;
+                    var glyph = style.getFont() instanceof FontDescription.PlayerSprite ? BitmapFont.Glyph.PLAYER : BitmapFont.Glyph.ATLAS;
                     posX += glyph.getWidth(size, style.isBold() ? 1 : 0);
                 }
 
                 return true;
             }
         };
-        text.asOrderedText().accept(tmp);
+        text.getVisualOrderText().accept(tmp);
         return tmp.posX;
     }
 }

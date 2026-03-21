@@ -1,16 +1,16 @@
 package eu.pb4.mapcanvas.api.core;
 
-import net.minecraft.item.map.MapDecorationType;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.text.Text;
+import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.saveddata.maps.MapDecorationType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.NonExtendable
 public interface CanvasIcon {
-    RegistryEntry<MapDecorationType> getType();
+    Holder<MapDecorationType> getType();
 
-    void setType(RegistryEntry<MapDecorationType> type);
+    void setType(Holder<MapDecorationType> type);
 
     int getX();
 
@@ -25,9 +25,9 @@ public interface CanvasIcon {
     void setVisibility(boolean visibility);
 
     @Nullable
-    Text getText();
+    Component getText();
 
-    void setText(Text text);
+    void setText(Component text);
 
     <T extends DrawableCanvas & IconContainer> T getOwningCanvas();
 

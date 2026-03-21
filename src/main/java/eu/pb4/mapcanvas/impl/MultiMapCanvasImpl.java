@@ -5,16 +5,16 @@ import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.api.core.PlayerCanvas;
 import eu.pb4.mapcanvas.api.core.CanvasIcon;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.map.MapDecorationType;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.saveddata.maps.MapDecorationType;
+import net.minecraft.world.level.saveddata.maps.MapId;
 
 public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
     private int width;
@@ -22,7 +22,7 @@ public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
     private MapCanvasPart[] parts;
     private final Set<WrappedMapIcon> icons = new HashSet<>();
 
-    private final Set<ServerPlayNetworkHandler> players = Collections.synchronizedSet(new HashSet<>());
+    private final Set<ServerGamePacketListenerImpl> players = Collections.synchronizedSet(new HashSet<>());
 
     public MultiMapCanvasImpl(int width, int height) {
         this.resize(width, height);
@@ -131,7 +131,7 @@ public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
     }
 
     @Override
-    public CanvasIcon createIcon(RegistryEntry<MapDecorationType> type, boolean visible, int x, int y, byte rotation, @Nullable Text text) {
+    public CanvasIcon createIcon(Holder<MapDecorationType> type, boolean visible, int x, int y, byte rotation, @Nullable Component text) {
         int canvasX = x / CanvasUtils.MAP_ICON_SIZE;
         int canvasY = y / CanvasUtils.MAP_ICON_SIZE;
         var icon = new WrappedMapIcon(this.getSubCanvas(canvasX, canvasY).createIcon(type, visible, x % CanvasUtils.MAP_ICON_SIZE, y % CanvasUtils.MAP_ICON_SIZE, rotation, text), canvasX, canvasY);
@@ -159,7 +159,7 @@ public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
     }
 
     @Override
-    public boolean addPlayer(ServerPlayNetworkHandler player) {
+    public boolean addPlayer(ServerGamePacketListenerImpl player) {
         if (this.isDestroyed()) {
             return false;
         }
@@ -175,7 +175,7 @@ public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
     }
 
     @Override
-    public boolean removePlayer(ServerPlayNetworkHandler player) {
+    public boolean removePlayer(ServerGamePacketListenerImpl player) {
         return this.players.remove(player);
     }
 
@@ -197,7 +197,7 @@ public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
     }
 
     @Override
-    public MapIdComponent getIdComponent() {
+    public MapId getIdComponent() {
         return null;
     }
 
@@ -233,12 +233,12 @@ public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
         }
 
         @Override
-        public RegistryEntry<MapDecorationType> getType() {
+        public Holder<MapDecorationType> getType() {
             return this.icon.getType();
         }
 
         @Override
-        public void setType(RegistryEntry<MapDecorationType> type) {
+        public void setType(Holder<MapDecorationType> type) {
             this.icon.setType(type);
         }
 
@@ -283,12 +283,12 @@ public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
         }
 
         @Override
-        public @Nullable Text getText() {
+        public @Nullable Component getText() {
             return this.icon.getText();
         }
 
         @Override
-        public void setText(Text text) {
+        public void setText(Component text) {
             this.icon.setText(text);
         }
 
@@ -307,7 +307,7 @@ public final class MultiMapCanvasImpl implements CombinedPlayerCanvas {
         }
 
         @Override
-        protected Collection<ServerPlayNetworkHandler> getPlayers() {
+        protected Collection<ServerGamePacketListenerImpl> getPlayers() {
             return MultiMapCanvasImpl.this.players;
         }
     }

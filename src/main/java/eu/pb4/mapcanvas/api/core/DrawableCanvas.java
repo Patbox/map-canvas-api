@@ -3,11 +3,11 @@ package eu.pb4.mapcanvas.api.core;
 import eu.pb4.mapcanvas.impl.MapIdManager;
 import eu.pb4.mapcanvas.impl.MultiMapCanvasImpl;
 import eu.pb4.mapcanvas.impl.SingleMapCanvas;
-import net.minecraft.block.MapColor;
+import net.minecraft.world.level.material.MapColor;
 
 public interface DrawableCanvas {
     default void set(int x, int y, MapColor color, MapColor.Brightness brightness) {
-        this.setRaw(x, y, color.getRenderColorByte(brightness));
+        this.setRaw(x, y, color.getPackedId(brightness));
     }
 
     default void set(int x, int y, CanvasColor color) {
@@ -19,7 +19,7 @@ public interface DrawableCanvas {
     }
 
     default void fill(MapColor color, MapColor.Brightness brightness) {
-        this.fillRaw(color.getRenderColorByte(brightness));
+        this.fillRaw(color.getPackedId(brightness));
     }
 
     default void fill(CanvasColor color) {

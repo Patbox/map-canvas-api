@@ -1,20 +1,20 @@
 package eu.pb4.mapcanvas.mixin;
 
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.decoration.ItemFrameEntity;
-import net.minecraft.item.ItemStack;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(ItemFrameEntity.class)
+@Mixin(ItemFrame.class)
 public interface ItemFrameEntityAccessor {
-    @Accessor("ITEM_STACK")
-    static TrackedData<ItemStack> getItemStack() {
+    @Accessor("DATA_ITEM")
+    static EntityDataAccessor<ItemStack> getItemStack() {
         throw new UnsupportedOperationException();
     }
 
-    @Accessor("ROTATION")
-    static TrackedData<Integer> getRotation() {
+    @Accessor("DATA_ROTATION")
+    static EntityDataAccessor<Integer> getRotation() {
         throw new UnsupportedOperationException();
     }
 }

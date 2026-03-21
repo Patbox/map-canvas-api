@@ -4,13 +4,12 @@ import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.api.font.CanvasFont;
 import eu.pb4.mapcanvas.api.utils.CanvasUtils;
-import net.minecraft.util.math.ColorHelper;
-import net.minecraft.util.math.MathHelper;
-
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.image.BufferedImage;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.Mth;
 
 public record AwtFont(Font font, Metadata metadata, boolean antiAliasing) implements CanvasFont {
     private static final FontRenderContext CONTEXT = new FontRenderContext(null, false, false);
@@ -62,7 +61,7 @@ public record AwtFont(Font font, Metadata metadata, boolean antiAliasing) implem
             return;
         }
 
-        var image = new BufferedImage(MathHelper.ceil(bounds.getWidth()), MathHelper.ceil(bounds.getHeight() + 2), BufferedImage.TYPE_BYTE_GRAY);
+        var image = new BufferedImage(Mth.ceil(bounds.getWidth()), Mth.ceil(bounds.getHeight() + 2), BufferedImage.TYPE_BYTE_GRAY);
         var g = image.createGraphics();
         g.setColor(Color.WHITE);
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, this.antiAliasing ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
@@ -89,7 +88,7 @@ public record AwtFont(Font font, Metadata metadata, boolean antiAliasing) implem
                 if (val == 255) {
                     canvas.setRaw(rx, ry, raw);
                 } else {
-                    canvas.setRaw(rx, ry, CanvasUtils.findClosestRawColor(ColorHelper.lerp(val / 255f, canvas.get(rx, ry).getRgbColor(), rgbColor)));
+                    canvas.setRaw(rx, ry, CanvasUtils.findClosestRawColor(ARGB.srgbLerp(val / 255f, canvas.get(rx, ry).getRgbColor(), rgbColor)));
                 }
             }
         }

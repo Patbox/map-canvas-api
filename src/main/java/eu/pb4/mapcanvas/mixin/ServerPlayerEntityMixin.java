@@ -6,8 +6,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.math.Box;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -18,8 +16,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
+import net.minecraft.server.level.ServerPlayer;
 
-@Mixin(ServerPlayerEntity.class)
+@Mixin(ServerPlayer.class)
 public class ServerPlayerEntityMixin implements PlayerInterface {
     private final Int2ObjectMap<VirtualDisplay> mapcanvas_displays = new Int2ObjectOpenHashMap<>();
 
@@ -42,7 +41,7 @@ public class ServerPlayerEntityMixin implements PlayerInterface {
         return this.mapcanvas_displays.get(id);
     }
 
-    @Inject(method = "onDisconnect", at = @At("HEAD"))
+    @Inject(method = "disconnect", at = @At("HEAD"))
     private void mapcanvas_disconnect(CallbackInfo ci) {
         this.mapcanvas_removeAll();
     }
@@ -50,7 +49,7 @@ public class ServerPlayerEntityMixin implements PlayerInterface {
     @Unique
     private void mapcanvas_removeAll() {
         for (var entry : new ArrayList<>(this.mapcanvas_displays.values())) {
-            entry.removePlayer((ServerPlayerEntity) (Object) this);
+            entry.removePlayer((ServerPlayer) (Object) this);
         }
     }
 }

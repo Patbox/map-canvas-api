@@ -5,13 +5,6 @@ import eu.pb4.mapcanvas.api.core.CanvasColor;
 import eu.pb4.mapcanvas.api.core.CanvasImage;
 import eu.pb4.mapcanvas.api.core.DrawableCanvas;
 import eu.pb4.mapcanvas.api.core.IconContainer;
-import net.minecraft.block.MapColor;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.text.TextCodecs;
-import net.minecraft.util.math.ColorHelper;
-import net.minecraft.util.math.MathHelper;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -19,6 +12,13 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.material.MapColor;
 
 public final class CanvasUtils {
     public static final int MAP_DATA_SIZE = 128;
@@ -143,8 +143,8 @@ public final class CanvasUtils {
     /**
      * Converts canvas to nbt
      */
-    public static NbtCompound toNbt(DrawableCanvas canvas, RegistryWrapper.WrapperLookup lookup) {
-        var nbt = new NbtCompound();
+    public static CompoundTag toNbt(DrawableCanvas canvas, HolderLookup.Provider lookup) {
+        var nbt = new CompoundTag();
         final int width = canvas.getWidth();
         final int height = canvas.getHeight();
 
@@ -166,17 +166,17 @@ public final class CanvasUtils {
             var iconsSource = iconContainer.getIcons();
 
             if (!iconsSource.isEmpty()) {
-                var icons = new NbtList();
+                var icons = new ListTag();
 
                 for (var icon : iconsSource) {
-                    var iconNbt = new NbtCompound();
-                    iconNbt.putString("TypeId", icon.getType().getKey().orElseThrow().getValue().toString());
+                    var iconNbt = new CompoundTag();
+                    iconNbt.putString("TypeId", icon.getType().unwrapKey().orElseThrow().identifier().toString());
                     iconNbt.putBoolean("Vis", icon.isVisible());
                     iconNbt.putInt("X", icon.getX());
                     iconNbt.putInt("Y", icon.getY());
                     iconNbt.putByte("Rot", icon.getRotation());
                     if (icon.getText() != null) {
-                        iconNbt.putString("Text", TextCodecs.CODEC.encodeStart(lookup.getOps(JsonOps.INSTANCE), icon.getText()).getOrThrow().toString());
+                        iconNbt.putString("Text", ComponentSerialization.CODEC.encodeStart(lookup.createSerializationContext(JsonOps.INSTANCE), icon.getText()).getOrThrow().toString());
                     }
 
                     icons.add(iconNbt);
@@ -201,7 +201,7 @@ public final class CanvasUtils {
             for (var y = 0; y < height; y++) {
                 var color = canvas.get(x, y);
 
-                if (color.getColor() != MapColor.CLEAR) {
+                if (color.getColor() != MapColor.NONE) {
                     image.setRGB(x, y, color.getRgbColor() | 0xFF000000);
                 }
             }
@@ -262,9 +262,9 @@ public final class CanvasUtils {
             var color = CanvasColor.getFromRaw(i);
 
             var rgb = color.getRgbColor();
-            r[i] = (byte) ColorHelper.getRed(rgb);
-            g[i] = (byte) ColorHelper.getGreen(rgb);
-            b[i] = (byte) ColorHelper.getBlue(rgb);
+            r[i] = (byte) ARGB.red(rgb);
+            g[i] = (byte) ARGB.green(rgb);
+            b[i] = (byte) ARGB.blue(rgb);
             a[i] = (byte) 0xFF;
         }
 
@@ -284,7 +284,7 @@ public final class CanvasUtils {
 
         for (int i = 0; i < length; i++) {
             final var canvasColor = array[i];
-            if (canvasColor.getColor() == MapColor.CLEAR) {
+            if (canvasColor.getColor() == MapColor.NONE) {
                 continue;
             }
 
@@ -294,7 +294,7 @@ public final class CanvasUtils {
             final int greenCanvas = (tmpColor >> 8) & 0xFF;
             final int blueCanvas = (tmpColor) & 0xFF;
 
-            final int distance = MathHelper.square(redCanvas - redColor) + MathHelper.square(greenCanvas - greenColor) + MathHelper.square(blueCanvas - blueColor);
+            final int distance = Mth.square(redCanvas - redColor) + Mth.square(greenCanvas - greenColor) + Mth.square(blueCanvas - blueColor);
 
             if (distance < shortestDistance) {
                 out = canvasColor;

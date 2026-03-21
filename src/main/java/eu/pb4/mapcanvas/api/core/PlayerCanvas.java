@@ -1,33 +1,33 @@
 package eu.pb4.mapcanvas.api.core;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.saveddata.maps.MapId;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.NonExtendable
 public interface PlayerCanvas extends DrawableCanvas, IconContainer {
-    default boolean addPlayer(ServerPlayerEntity player) {
-        return this.addPlayer(player.networkHandler);
+    default boolean addPlayer(ServerPlayer player) {
+        return this.addPlayer(player.connection);
     }
 
-    default boolean removePlayer(ServerPlayerEntity player) {
-        return this.removePlayer(player.networkHandler);
+    default boolean removePlayer(ServerPlayer player) {
+        return this.removePlayer(player.connection);
     }
 
-    boolean addPlayer(ServerPlayNetworkHandler player);
+    boolean addPlayer(ServerGamePacketListenerImpl player);
 
-    boolean removePlayer(ServerPlayNetworkHandler player);
+    boolean removePlayer(ServerGamePacketListenerImpl player);
 
     void sendUpdates();
 
     boolean isDirty();
 
     int getId();
-    MapIdComponent getIdComponent();
+    MapId getIdComponent();
 
     default int getIconHeight() {
         return this.getHeight() * 2;
@@ -39,7 +39,7 @@ public interface PlayerCanvas extends DrawableCanvas, IconContainer {
 
     default ItemStack asStack() {
         var stack = new ItemStack(Items.FILLED_MAP);
-        stack.set(DataComponentTypes.MAP_ID, this.getIdComponent());
+        stack.set(DataComponents.MAP_ID, this.getIdComponent());
         return stack;
     }
 
