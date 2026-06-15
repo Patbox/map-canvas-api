@@ -9,11 +9,6 @@ import net.minecraft.world.entity.Entity;
 
 @Mixin(Entity.class)
 public interface EntityAccessor {
-    @Accessor("ENTITY_COUNTER")
-    static AtomicInteger getCurrentId() {
-        throw new UnsupportedOperationException();
-    }
-
     @Accessor("DATA_SHARED_FLAGS_ID")
     static EntityDataAccessor<Byte> getFlags() {
         throw new UnsupportedOperationException();

@@ -23,6 +23,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -440,7 +441,7 @@ public sealed abstract class VirtualDisplay permits VirtualDisplay.Combined, Vir
 
             var spawnPacket = new ClientboundAddEntityPacket(entityId, uuid,
                     entPos.x(), entPos.y(), entPos.z(), 0f, 0f,
-                    glowing ? EntityType.GLOW_ITEM_FRAME : EntityType.ITEM_FRAME,
+                    glowing ? EntityTypes.GLOW_ITEM_FRAME : EntityTypes.ITEM_FRAME,
                     direction.get3DDataValue(), Vec3.ZERO, 0);
 
 

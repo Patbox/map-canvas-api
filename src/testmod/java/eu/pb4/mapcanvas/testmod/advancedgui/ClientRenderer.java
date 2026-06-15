@@ -20,7 +20,7 @@ public class ClientRenderer implements ActiveRenderer {
     @Override
     public void render(PlayerCanvas outputCanvas, DrawableCanvas canvas, long time, int displayFps, int frame) {
         Minecraft.getInstance().execute(() -> {
-           Screenshot.takeScreenshot(Minecraft.getInstance().getMainRenderTarget(), nativeImage -> {
+           Screenshot.takeScreenshot(Minecraft.getInstance().gameRenderer.mainRenderTarget(), nativeImage -> {
                var oldImage = this.source;
                this.source = nativeImage;
                if (oldImage != null) {

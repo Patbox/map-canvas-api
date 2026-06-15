@@ -1,6 +1,7 @@
 package eu.pb4.mapcanvas.impl;
 
 import eu.pb4.mapcanvas.mixin.EntityAccessor;
+import eu.pb4.mapcanvas.mixin.ServerLevelAccessor;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -16,7 +17,7 @@ public class MapIdManager {
         if (!freeEntityIds.isEmpty()) {
             return freeEntityIds.popInt();
         }
-        return EntityAccessor.getCurrentId().incrementAndGet();
+        return ServerLevelAccessor.getCurrentId().incrementAndGet();
     }
 
 
