@@ -58,6 +58,12 @@ public final class DefaultFonts {
      */
     public static final LazyCanvasFont UNIFONT_JP;
 
+    /**
+     * Unifont (Minecraft's fallback font) with Private Use Area characters.
+     * <a href="https://unifoundry.com/unifont/index.html">...</a>
+     */
+    public static final LazyCanvasFont UNIFONT_PUA;
+
 
     static {
         var path = FabricLoader.getInstance().getModContainer("map-canvas-api").get().getPath("fonts");
@@ -79,6 +85,10 @@ public final class DefaultFonts {
         UNIFONT_JP = REGISTRY.register(Identifier.parse("unifont:japanese"), new StackedLazyFont(new LazyCanvasFont[]{
                 new MojangUnifontFont(jp, "unifont_jp_patch-16.0.03",
                         "https://resources.download.minecraft.net/59/590470ab0f17afb73a4e41d9cb56fdbe069d275a", includeSpace),
+                UNIFONT}, jp));
+        UNIFONT_PUA = REGISTRY.register(Identifier.parse("unifont:pua"), new StackedLazyFont(new LazyCanvasFont[]{
+                new MojangUnifontFont(jp, "unifont_pua_patch-16.0.03",
+                        "https://resources.download.minecraft.net/d7/d7caa0e3aa5eb656c51817ae4bfbf3c4d72cdaad", includeSpace),
                 UNIFONT}, jp));
         REGISTRY.register(Identifier.parse("minecraft:uniform"), UNIFONT);
     }

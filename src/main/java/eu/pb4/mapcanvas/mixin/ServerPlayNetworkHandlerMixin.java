@@ -6,6 +6,7 @@ import net.minecraft.client.particle.Particle;
 import net.minecraft.network.protocol.game.ServerboundAttackPacket;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundPickItemFromEntityPacket;
+import net.minecraft.network.protocol.game.ServerboundSpectatorActionPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.InteractionHand;
@@ -33,10 +34,23 @@ public abstract class ServerPlayNetworkHandlerMixin {
     private void mapcanvas_handleAttack(ServerboundAttackPacket packet, CallbackInfo ci) {
         var display = ((PlayerInterface) this.player).mapcanvas_getDisplay(packet.entityId());
         if (display != null) {
-            display.interactAt(player, packet.entityId(), null, InteractionHand.MAIN_HAND, VirtualDisplay.ClickType.RIGHT);
+            display.interactAt(player, packet.entityId(), null, InteractionHand.MAIN_HAND, VirtualDisplay.ClickType.LEFT);
         }
     }
 
+    @Inject(method = "handleSpectatorAction", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;getEntityOrPart(I)Lnet/minecraft/world/entity/Entity;"))
+    private void mapcanvas_handleSpectatorAttack(ServerboundSpectatorActionPacket packet, CallbackInfo ci) {
+        if (!packet.spectateEntityId().isPresent()) {
+            return;
+        }
+
+        var id = packet.spectateEntityId().orElseThrow();
+
+        var display = ((PlayerInterface) this.player).mapcanvas_getDisplay(id);
+        if (display != null) {
+            display.interactAt(player, id, null, InteractionHand.MAIN_HAND, VirtualDisplay.ClickType.LEFT);
+        }
+    }
 
     @Inject(method = "handleInteract", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;getEntityOrPart(I)Lnet/minecraft/world/entity/Entity;"))
     private void mapcanvas_handleDisplayEntity(ServerboundInteractPacket packet, CallbackInfo ci) {
