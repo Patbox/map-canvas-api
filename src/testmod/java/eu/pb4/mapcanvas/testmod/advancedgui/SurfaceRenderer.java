@@ -33,7 +33,7 @@ public class SurfaceRenderer implements ActiveRenderer {
             for (int y = 0; y < height; y++) {
                 var color = CanvasColor.values()[(int) ((
                                         (
-                                                (this.noise.getValue((x / 80d + sin *2) + Math.sin(y / 40d), y / 80d + (time / 1000d) % 3600 + Math.sin(x / 40d) * 2, (time / 600d) % 3600)
+                                                (this.noise.get((x / 80d + sin *2) + Math.sin(y / 40d), y / 80d + (time / 1000d) % 3600 + Math.sin(x / 40d) * 2, (time / 600d) % 3600)
                                         ) * 8 + time / 400) % colorSize) + 4)];
 
 

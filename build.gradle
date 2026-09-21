@@ -1,5 +1,5 @@
 plugins {
-	id 'net.fabricmc.fabric-loom' version "1.15-SNAPSHOT"
+	id 'net.fabricmc.fabric-loom' version "1.17-SNAPSHOT"
 	id 'maven-publish'
 }
 
@@ -57,8 +57,8 @@ dependencies {
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
 	// You may need to force-disable transitiveness on them.
-	compileOnly localRuntime("eu.pb4:polymer-common:0.17.0+26.2-rc-2")
-	compileOnly localRuntime("eu.pb4:placeholder-api:3.1.0-beta.1+26.2")
+	compileOnly localRuntime("eu.pb4:polymer-common:0.18.2+26.3")
+	compileOnly localRuntime("eu.pb4:placeholder-api:3.2.0+26.3")
 	compileOnly localRuntime("org.openjdk.jol:jol-core:0.10")
 
 
@@ -91,6 +91,10 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+
 	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
 	// if it is present.
 	// If you remove this line, sources will not be generated.
